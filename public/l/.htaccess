@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /l/
+
+    # This rule will match URLs like /l/mpg651 and pass the 'mpg651' as a parameter to index.php
+    RewriteRule ^([a-zA-Z0-9]+)$ index.php?unique_link=$1 [L,QSA]
+
+    # Ensure existing files and directories are served directly without rewrite
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Fallback rule to route all other requests to index.php
+    RewriteRule . index.php [L]
+</IfModule>

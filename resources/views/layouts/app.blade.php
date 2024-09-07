@@ -29,8 +29,9 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
+                @yield('content')
             </main>
         </div>
+        <!-- In resources/views/layouts/app.blade.php or your specific layout -->
     </body>
 </html>

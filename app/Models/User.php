@@ -3,11 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Filament\Models\Contracts\FilamentUser;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
 
@@ -16,10 +19,21 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+
+
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return $this->type === 'target';
+    }
+
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'source', // Add this line
+        'type',
+        'kurs',
     ];
 
     /**
@@ -43,5 +57,22 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public static function getAvailableTypes(): array
+    {
+        return [
+            'msadmin' => 'MsAdmin',
+            'target' => 'Target',
+            'store' => 'Store',
+            'storekeeper' => 'StoreKeeper',
+            'manager' => 'Manager',
+            'superadmin' => 'SuperAdmin'
+        ];
+    }
+
+    public static function where(string $column, $value): Builder
+    {
+        return parent::query()->where($column, $value);
     }
 }
