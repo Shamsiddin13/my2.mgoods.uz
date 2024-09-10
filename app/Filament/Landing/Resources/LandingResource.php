@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Landing\Resources;
 
-use App\Filament\Resources\LandingResource\Pages;
-use App\Filament\Resources\LandingResource\RelationManagers;
+use App\Filament\Landing\Resources\LandingResource\Pages\CreateLanding;
+use App\Filament\Landing\Resources\LandingResource\Pages\EditLanding;
+use App\Filament\Landing\Resources\LandingResource\Pages\ListLandings;
+use App\Filament\Landing\Resources\LandingResource\Pages\ViewLanding;
 use App\Models\Landing;
 use App\Models\Product;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
-use \Filament\Forms\Components\Group;
-use Filament\Infolists\Components\ColorEntry;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
@@ -20,11 +21,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class LandingResource extends Resource
 {
@@ -197,10 +195,10 @@ class LandingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListLandings::route('/'),
-            'create' => Pages\CreateLanding::route('/create'),
-            'view' => Pages\ViewLanding::route('/{record}'),
-            'edit' => Pages\EditLanding::route('/{record}/edit'),
+            'index' => ListLandings::route('/'),
+            'create' => CreateLanding::route('/create'),
+            'view' => ViewLanding::route('/{record}'),
+            'edit' => EditLanding::route('/{record}/edit'),
         ];
     }
 }

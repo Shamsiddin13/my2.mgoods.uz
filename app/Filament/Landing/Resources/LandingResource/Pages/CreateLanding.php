@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\LandingResource\Pages;
+namespace App\Filament\Landing\Resources\LandingResource\Pages;
 
-use App\Filament\Resources\LandingResource;
-use Filament\Actions;
+use App\Filament\Landing\Resources\LandingResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateLanding extends CreateRecord

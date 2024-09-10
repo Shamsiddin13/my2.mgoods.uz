@@ -7,7 +7,6 @@ use App\Filament\Pages\Registration;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -20,48 +19,33 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use pxlrbt\FilamentSpotlight\SpotlightPlugin;
 
-class AdminPanelProvider extends PanelProvider
+class LandingPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarCollapsibleOnDesktop()
-            ->globalSearchKeyBindings(['command+l', 'ctrl+l'])
-            ->font('JetBrains Mono')
-            ->userMenuItems([
-                MenuItem::make()
-                    ->label('Settings')
-                    ->url('')
-                    ->icon('heroicon-o-cog-6-tooth')
-            ])
-            ->plugins([
-                SpotlightPlugin::make()
-            ])
             ->default()
-            ->id('admin')
-            ->path('admin')
+            ->id('landing')
+            ->path('landing')
             ->login(CustomLogin::class)
             ->registration(Registration::class)
             ->colors([
                 'danger' => Color::Rose,
                 'gray' => Color::Slate,
                 'info' => Color::Blue,
-                'primary' => Color::Indigo,
+                'primary' => Color::Orange,
                 'success' => Color::Emerald,
                 'warning' => Color::Orange,
             ])
-            ->font('Inter')
-            ->favicon(asset('favicon.ico'))
-            ->brandLogo(fn () => view('vendor.filament.-panels.components.logo'))
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/Landing/Resources'), for: 'App\\Filament\\Landing\\Resources')
+            ->discoverPages(in: app_path('Filament/Landing/Pages'), for: 'App\\Filament\\Landing\\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Landing/Widgets'), for: 'App\\Filament\\Landing\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
 //                Widgets\FilamentInfoWidget::class,
@@ -81,5 +65,4 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
     }
-
 }
