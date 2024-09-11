@@ -33,7 +33,6 @@ class EmailVerifyService
                 'result' => $result,
                 'score' => $score
             ];
-
         } catch (RequestException $e) {
             // Handle the exception or return an error response
             return [
@@ -41,5 +40,6 @@ class EmailVerifyService
                 'message' => $e->getMessage()
             ];
         }
+
     }
 }

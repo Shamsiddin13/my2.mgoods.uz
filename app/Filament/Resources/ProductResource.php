@@ -24,8 +24,9 @@ use Illuminate\Database\Eloquent\Model;
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationLabel = "Mahsulotlar";
+    protected static ?string $pluralModelLabel = "Mahsulotlar";
     protected static int $globalSearchResultsLimit = 20;
     protected static ?string $recordTitleAttribute = "name";
     public static function getGloballySearchableAttributes(): array

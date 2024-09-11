@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources\StatisticsResource\Pages;
 
-use App\Filament\Resources\StatisticsResource;
-use Filament\Actions;
+use App\Filament\Resources\DailyStatisticsResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateStatistics extends CreateRecord
 {
-    protected static string $resource = StatisticsResource::class;
+    protected static string $resource = DailyStatisticsResource::class;
 }

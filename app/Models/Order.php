@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class Order extends Model
 {
     use HasFactory;
+    
 
     // If the table name does not follow Laravel's naming convention,
     // explicitly set the table name
@@ -65,25 +66,6 @@ class Order extends Model
         'target' => 'decimal:2',
     ];
     // Order Model (Order.php)
-    public static function getOrderStatistics($source, $fromDate, $untilDate)
-    {
-        return static::selectRaw("
-            article,
-            COUNT(DISTINCT CASE WHEN status IN ('Новый', 'Принят', 'Недозвон', 'Отмена', 'В пути', 'Доставлен', 'Выполнен', 'Возврат', 'Подмены') THEN ID_number ELSE NULL END) AS Lead,
-            COUNT(DISTINCT CASE WHEN status IN ('Принят') THEN ID_number ELSE NULL END) AS Qabul,
-            COUNT(DISTINCT CASE WHEN status IN ('Отмена') THEN ID_number ELSE NULL END) AS Otkaz,
-            COUNT(DISTINCT CASE WHEN status IN ('В пути', 'EMU') THEN ID_number ELSE NULL END) AS Yolda,
-            COUNT(DISTINCT CASE WHEN status IN ('Доставлен') THEN ID_number ELSE NULL END) AS Yetkazildi,
-            COUNT(DISTINCT CASE WHEN status IN ('Выполнен') THEN ID_number ELSE NULL END) AS Sotildi,
-            COUNT(DISTINCT CASE WHEN status IN ('Возврат') THEN ID_number ELSE NULL END) AS QaytibKeldi
-        ")
-            ->where('source', '=', $source)
-            ->whereBetween('createdAt', [$fromDate, $untilDate])
-            ->groupBy('article')
-            ->orderBy('article', 'DESC');
-    }
-
-
     private static function select(string $column): Builder
     {
         return self::query()->select($column);

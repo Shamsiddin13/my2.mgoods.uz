@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\OTPController;
 use App\Models\StreamController;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +17,8 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
 });
 
 Route::view('/', 'welcome');
+
+Route::get('/statistics', [\App\Http\Controllers\Statistics::class, 'index'])->name('statistics');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
