@@ -40,6 +40,19 @@ class Product extends Model
         'target' => 'decimal:2',
         'last_updatedAt' => 'timestamp',
     ];
+    public function imageUrl()
+    {
+        // Construct the path to the image
+        $imagePath = "/storage/product_images/{$this->id}.jpg";
+
+        // Check if the file exists (optional, if you want to validate)
+        if (file_exists(public_path($imagePath))) {
+            return $imagePath;
+        }
+
+        // Return default image path if the specific image does not exist
+        return '/storage/images/noimage.jpg';
+    }
     public function getLandingImageAttribute()
     {
         return $this->landingData?->img1;
@@ -85,6 +98,8 @@ class Product extends Model
         return self::select('store')
             ->whereNotNull('store')
             ->where('store', '!=', '')
+            ->where('store', '!=', ' ')
+            ->where('store', '!=', 'NULL')
             ->where('store', '!=', 'None')
             ->groupBy('store')
             ->get();
@@ -94,7 +109,7 @@ class Product extends Model
     {
         return self::select('article')
             ->whereNotNull('article')
-            ->where('article', '!=', '')
+            ->where('article', '!=', 'null')
             ->where('article', '!=', 'None')
             ->groupBy('article')
             ->get();

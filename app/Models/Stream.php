@@ -29,17 +29,17 @@ class Stream extends Model
     public $timestamps = false;
 
     // If you do have timestamps but they have custom names, define them
-    const CREATED_AT = 'created_at';
+    const CREATED_AT = 'createdAt';
 
     // Define the fillable attributes (columns that can be mass-assigned)
     protected $fillable = [
-        'name',
+        'stream_name',
         'source',
         'link',
         'full_link',
         'pixel_id',
         'landing_id',
-        'created_at',
+        'createdAt',
         // Add other columns if necessary
     ];
 

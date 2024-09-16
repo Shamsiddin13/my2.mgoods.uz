@@ -7,8 +7,10 @@ use App\Filament\Admin\Resources\ProfitLossStatisticsResource\Pages\UpdateTarget
 use App\Models\Order;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,10 +52,9 @@ class ProfitLossStatisticsResource extends Resource
                 TextColumn::make("article")
                     ->label("Article")
                     ->sortable(),
-                Tables\Actions\Action::make("target")
-                    ->label("Harajat summa"),
-                Tables\Columns\TextInputColumn::make('target')
+                TextColumn::make('target')
                     ->label("Harajat summa")
+                    ->toggleable()
                     ->sortable(),
                 TextColumn::make('Lead_narxi')
                     ->label("Lead")
@@ -71,9 +72,7 @@ class ProfitLossStatisticsResource extends Resource
                     ->label("Profit")
                     ->toggleable()
                     ->sortable()
-                    ->formatStateUsing(function ($state) {
-                        return number_format($state, 0, '.', ' ');
-                    }),
+                    ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
                 TextColumn::make('YoldaSotildi_narxi')
                     ->label("Yolda + Sotildi")
                     ->toggleable()
@@ -82,9 +81,7 @@ class ProfitLossStatisticsResource extends Resource
                     ->label("Profit + Yolda")
                     ->toggleable()
                     ->sortable()
-                    ->formatStateUsing(function ($state) {
-                        return number_format($state, 0, '.', ' ');
-                    }),
+                    ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
             ])
             ->defaultSort('displayProductName')
             ->paginated([
@@ -99,7 +96,6 @@ class ProfitLossStatisticsResource extends Resource
                 //
             ])
             ->actions([
-                //
             ]);
     }
 

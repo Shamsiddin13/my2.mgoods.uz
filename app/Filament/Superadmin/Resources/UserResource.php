@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Filament\Admin\Resources;
+namespace App\Filament\Superadmin\Resources;
 
-use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Superadmin\Resources\UserResource\Pages\CreateUser;
+use App\Filament\Superadmin\Resources\UserResource\Pages\EditUser;
+use App\Filament\Superadmin\Resources\UserResource\Pages\ListUsers;
 use App\Models\User;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -15,8 +17,10 @@ use Filament\Tables\Table;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
+
     protected static ?int $navigationSort = 5;
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function getNavigationBadge(): ?string
     {
@@ -78,6 +82,12 @@ class UserResource extends Resource
                     ->searchable()
                     ->limit(50),
 
+                TextColumn::make('email_verified_at')
+                    ->label('Email Verified At')
+                    ->tooltip(fn($record) => $record->updated_at->format('Y-m-d H:i:s'))
+                    ->sortable()
+                    ->date(),
+
                 TextColumn::make('type')
                     ->label('User Type')
                     ->sortable()
@@ -91,12 +101,14 @@ class UserResource extends Resource
                 TextColumn::make('created_at')
                     ->label('Created At')
                     ->sortable()
-                    ->dateTime(),
+                    ->tooltip(fn($record) => $record->created_at->format('Y-m-d H:i:s'))
+                    ->date(),
 
                 TextColumn::make('updated_at')
                     ->label('Updated At')
                     ->sortable()
-                    ->dateTime(),
+                    ->tooltip(fn($record) => $record->updated_at->format('Y-m-d H:i:s'))
+                    ->date(),
             ])
             ->filters([
                 //
@@ -125,9 +137,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\UserResource\Pages\ListUsers::route('/'),
-            'create' => \App\Filament\Admin\Resources\UserResource\Pages\CreateUser::route('/create'),
-            'edit' => \App\Filament\Admin\Resources\UserResource\Pages\EditUser::route('/{record}/edit'),
+            'index' => ListUsers::route('/'),
+            'create' => CreateUser::route('/create'),
+            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 }

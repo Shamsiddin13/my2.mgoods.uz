@@ -59,7 +59,7 @@ class UpdateTarget extends Page
     {
         return [
             Select::make('article')
-                ->label('Select Article')
+                ->label('Article Tanlang')
                 ->options(
                     Order::orderBy('article', 'ASC')  // Add sorting here
                     ->pluck('article', 'article')
@@ -70,7 +70,8 @@ class UpdateTarget extends Page
                 ->live(),
 
             TextInput::make('new_target')
-                ->label('New Target Value')
+                ->label('Harajat summa')
+                ->placeholder('Harajat summani kiriting ..')
                 ->numeric()
                 ->required()
                 ->live()

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -27,11 +28,16 @@ class User extends Authenticatable implements FilamentUser
 
         $allowedPanels = [
             'target' => 'admin',
+            'store' => 'store',
             'msadmin' => 'landing',
+            'manager' => 'manager',
+            'storekeeper' => 'storekeeper',
+            'superadmin' => 'superadmin',
             // Add more user types and their corresponding panels as needed
         ];
 
         // Check if the user's type has a corresponding panel
+        session(['panel_id' => $panel->getId()]);
         return isset($allowedPanels[$this->type]) && $panel->getId() === $allowedPanels[$this->type] && $this->hasVerifiedEmail();
     }
 
@@ -80,7 +86,7 @@ class User extends Authenticatable implements FilamentUser
             'manager' => 'Manager',
             'msadmin' => 'MsAdmin',
             'storekeeper' => 'StoreKeeper',
-            'superadmin' => 'SuperAdmin'
+            'superadmin' => '密碼'
         ];
     }
 

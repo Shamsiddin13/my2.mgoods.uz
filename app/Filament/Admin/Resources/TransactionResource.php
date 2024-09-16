@@ -20,9 +20,11 @@ use Illuminate\Database\Eloquent\Builder;
 class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?string $recordTitleAttribute = "description";
     protected static ?string $navigationLabel = "Moliya";
+
     protected static ?string $pluralModelLabel = "Moliya";
     protected static ?int $navigationSort = 5;
     public static function getGloballySearchableAttributes(): array
@@ -94,7 +96,6 @@ class TransactionResource extends Resource
                     ->searchable(),
             ])
             ->filters([
-
                 Filter::make('transaction_date')
                     ->form([
                         DatePicker::make('created_from')->label("Tranzaksiya sana (dan)"),

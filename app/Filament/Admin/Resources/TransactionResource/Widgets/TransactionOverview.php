@@ -18,8 +18,8 @@ class TransactionOverview extends BaseWidget
     }
     protected function getStats(): array
     {
-        $source = 'btd';
-        $contractorName = 'btd';
+        $source = auth()->user()->source;
+        $contractorName = auth()->user()->source;
 
         // 1. Jarayonda Query (Status: 'В пути', 'Доставлен')
         $jarayondaQuery = Order::join('products', 'orders.article', '=', 'products.article')
@@ -54,10 +54,6 @@ class TransactionOverview extends BaseWidget
         $balans = $hisoblandi - $tolandi;
 
         return [
-            Stat::make('Jarayonda', number_format($jarayonda, 0, '.', ' '))
-                ->color('success')
-                ->icon('heroicon-o-truck'), // Example icon for 'Jarayonda'
-
             Stat::make('Hisoblandi', number_format($hisoblandi, 0, '.', ' '))
                 ->color('primary')
                 ->icon('heroicon-o-calculator'), // Example icon for 'Hisoblandi'
@@ -70,6 +66,10 @@ class TransactionOverview extends BaseWidget
             Stat::make('Balans', number_format($balans, 0, '.', ' '))
                 ->color($balans >= 0 ? 'success' : 'danger')
                 ->icon($balans >= 0 ? 'heroicon-o-arrow-trending-up' : 'heroicon-o-arrow-trending-down'), // Upward arrow for positive balance, downward for negative
+
+            Stat::make('Jarayonda', number_format($jarayonda, 0, '.', ' '))
+                ->color('success')
+                ->icon('heroicon-o-truck'), // Example icon for 'Jarayonda'
         ];
     }
 }

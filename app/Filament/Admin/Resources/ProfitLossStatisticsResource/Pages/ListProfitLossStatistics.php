@@ -21,7 +21,7 @@ class ListProfitLossStatistics extends ListRecords
         return [
 //            Actions\CreateAction::make(),
             Action::make('updateTargetPage')
-                ->label('Update Target Page')
+                ->label('Harajat summa')
                 ->url(route('filament.admin.resources.profit-loss-statistics.update-target'))
                 ->icon('heroicon-o-pencil') // Optional: add an icon
                 ->color('primary'), // Optional: set button color
