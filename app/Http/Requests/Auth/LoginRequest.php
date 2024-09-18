@@ -1,29 +1,39 @@
 <?php
 
-namespace App\Livewire\Forms;
+namespace App\Http\Requests\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Validate;
-use Livewire\Form;
 
-class LoginForm extends Form
+class LoginRequest extends FormRequest
 {
-    #[Validate('required|string|email')]
-    public string $email = '';
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    #[Validate('required|string')]
-    public string $password = '';
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'login' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ];
+    }
 
-    #[Validate('boolean')]
-    public bool $remember = false;
-
-    protected $login;
     /**
      * Attempt to authenticate the request's credentials.
      *
@@ -33,7 +43,7 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 //
-//        if (! Auth::attempt($this->only([$this->login, 'password']), $this->remember)) {
+//        if (! Auth::attempt($this->only($this->login, 'password'), $this->boolean('remember'))) {
 //            RateLimiter::hit($this->throttleKey());
 //
 //            throw ValidationException::withMessages([
@@ -42,9 +52,8 @@ class LoginForm extends Form
 //        }
 //
 //        RateLimiter::clear($this->throttleKey());
-
         $user = User::where('email', $this->login)
-                ->orwhere('username', $this->login)->orwhere('source', $this->login)->first();
+            ->orwhere('username', $this->login)->first();
         if (!$user || !Hash::check($this->password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
@@ -53,25 +62,27 @@ class LoginForm extends Form
             ]);
         }
 
-        Auth::login($user, $this->remember);
+        Auth::login($user, $this->boolean('remember'));
         RateLimiter::clear($this->throttleKey());
     }
 
     /**
-     * Ensure the authentication request is not rate limited.
+     * Ensure the login request is not rate limited.
+     *
+     * @throws \Illuminate\Validation\ValidationException
      */
-    protected function ensureIsNotRateLimited(): void
+    public function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
-        event(new Lockout(request()));
+        event(new Lockout($this));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'form.email' => trans('auth.throttle', [
+            'email' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -79,11 +90,11 @@ class LoginForm extends Form
     }
 
     /**
-     * Get the authentication rate limiting throttle key.
+     * Get the rate limiting throttle key for the request.
      */
-    protected function throttleKey(): string
+    public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
+        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
     }
 
 }

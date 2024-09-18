@@ -2,11 +2,8 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Admin\Resources\ProfitLossStatisticsResource;
-use App\Filament\Admin\Resources\ProfitLossStatisticsResource\Pages\UpdateTarget;
 use App\Filament\Auth\CustomLogin;
 use App\Filament\Pages\Registration;
-use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -30,6 +27,9 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->passwordReset()
+            ->emailVerification()
+            ->profile()
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+l', 'ctrl+l'])
@@ -69,7 +69,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-//                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

@@ -5,7 +5,6 @@ namespace App\Filament\Storekeeper\Resources;
 use App\Filament\Storekeeper\Resources\WarehouseResource\Pages;
 use App\Models\NewWarehouse;
 use App\Models\Product;
-use App\Models\Warehouse;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -13,7 +12,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -22,7 +20,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use function Livewire\Volt\dehydrate;
 
 class WarehouseResource extends Resource
 {
@@ -190,9 +187,6 @@ class WarehouseResource extends Resource
                 ]),
             ])
             ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
             ]);
     }
 

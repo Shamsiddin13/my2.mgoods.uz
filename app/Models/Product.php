@@ -71,6 +71,11 @@ class Product extends Model
         return $this->landingData?->link;
     }
 
+    public function getLandingCreatedAtAttribute()
+    {
+        return $this->landingData?->created_at;
+    }
+
     public function getLandingDescriptionAttribute()
     {
         return $this->landingData?->description;

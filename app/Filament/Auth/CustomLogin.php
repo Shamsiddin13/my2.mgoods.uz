@@ -50,4 +50,5 @@ class CustomLogin extends Login
             'data.login' => __('filament-panels::pages/auth/login.messages.failed'),
         ]);
     }
+
 }

@@ -30,6 +30,7 @@ class Stream extends Model
 
     // If you do have timestamps but they have custom names, define them
     const CREATED_AT = 'createdAt';
+    const UPDATED_AT = 'updatedAt';
 
     // Define the fillable attributes (columns that can be mass-assigned)
     protected $fillable = [
@@ -40,6 +41,7 @@ class Stream extends Model
         'pixel_id',
         'landing_id',
         'createdAt',
+        'updatedAt',
         // Add other columns if necessary
     ];
 
@@ -50,10 +52,6 @@ class Stream extends Model
         return $this->hasOne(Product::class, 'article', 'article');
     }
 
-//    public static function query(): Builder
-//    {
-//        return parent::query()->with('product'); // Ensure this matches the relationship method in the model
-//    }
     public function landing()
     {
         return $this->belongsTo(Landing::class, 'landing_id');
@@ -63,7 +61,8 @@ class Stream extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->created_at = now()->addHours(5);
+            $model->createdAt = now()->addHours(5);
+            $model->updatedAt = now()->addHours(5);
         });
 
         static::creating(function ($stream) {

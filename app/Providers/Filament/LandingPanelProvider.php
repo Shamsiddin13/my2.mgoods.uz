@@ -40,6 +40,8 @@ class LandingPanelProvider extends PanelProvider
                 'success' => Color::Emerald,
                 'warning' => Color::Orange,
             ])
+            ->favicon(asset('favicon.ico'))
+            ->brandLogo(fn () => view('vendor.filament.-panels.components.logo'))
             ->discoverResources(in: app_path('Filament/Landing/Resources'), for: 'App\\Filament\\Landing\\Resources')
             ->discoverPages(in: app_path('Filament/Landing/Pages'), for: 'App\\Filament\\Landing\\Pages')
             ->pages([

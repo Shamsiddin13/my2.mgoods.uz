@@ -1,47 +1,31 @@
-<form action="{{ route('verify-otp') }}" method="POST">
-    @csrf
-    <input type="hidden" name="email" value="{{ $email }}">
-    <label for="otp">Enter OTP:</label>
-    <input type="text" name="otp" maxlength="6" required>
+<x-guest-layout>
+    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+        {{ __("Ro'yxatdan o'tganingiz uchun tashakkur! \n\nIshni boshlashdan oldin, biz sizga yuborgan havolani bosish orqali elektron pochta manzilingizni tasdiqlay olasizmi? \n\nAgar siz xabarni olmagan bo'lsangiz, biz sizga mamnuniyat bilan boshqa xabar yuboramiz.") }}
+    </div>
 
-    <button type="submit">Verify</button>
-</form>
+    @if (session('status') == 'verification-link-sent')
+        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
+            {{ __("Ro'yxatdan o'tish paytida ko'rsatgan elektron pochta manzilingizga yangi tasdiqlash havolasi yuborildi.") }}
+        </div>
+    @endif
 
-<div id="countdown">Time left: 60s</div>
-<button id="resend" style="display:none;" onclick="resendOTP()">Resend OTP</button>
+    <div class="mt-4 flex items-center justify-between">
+        <form method="POST" action="{{ route('verification.send') }}">
+            @csrf
 
-<script>
-    let timeLeft = 60;
-    const countdownEl = document.getElementById('countdown');
-    const resendBtn = document.getElementById('resend');
+            <div>
+                <x-primary-button>
+                    {{ __('Tasdiqlash xabarini qayta yuborish') }}
+                </x-primary-button>
+            </div>
+        </form>
 
-    const timer = setInterval(() => {
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            countdownEl.style.display = 'none';
-            resendBtn.style.display = 'block';
-        } else {
-            countdownEl.innerHTML = `Time left: ${timeLeft}s`;
-        }
-        timeLeft -= 1;
-    }, 1000);
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
 
-    function resendOTP() {
-        // Send AJAX request to resend OTP
-        fetch('{{ route('resend-otp', ['email' => $email]) }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email: '{{ $email }}' })
-        }).then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    timeLeft = 60;
-                    countdownEl.style.display = 'block';
-                    resendBtn.style.display = 'none';
-                }
-            });
-    }
-</script>
+            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                {{ __('Log Out') }}
+            </button>
+        </form>
+    </div>
+</x-guest-layout>

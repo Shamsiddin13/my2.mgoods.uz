@@ -2,8 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\ProductResource\RelationManagers;
+use App\Filament\Admin\Resources\ProductResource\Pages\ListProducts;
 use App\Models\Product;
 use App\Models\Stream;
 use Filament\Forms;
@@ -243,10 +242,6 @@ class ProductResource extends Resource
                             ->label('Bonus')
                             ->default(fn ($record) => number_format($record->target, 0, '.', ' ')) // Set default value from the record
                             ->readOnly(),
-//                        TextInput::make('full_link')
-//                            ->label('Full Link')
-//                            ->default(fn ($record) => $record->full_link) // Assuming full_link is a property of $record
-//                            ->readOnly(),
                     ])
                     ->action(function ($data, $record) {
                         // Define the action when the form is submitted
@@ -273,7 +268,7 @@ class ProductResource extends Resource
                     ->url(function ($record): ?string {
                         // Assuming you want to fetch the latest stream for this landing_id
                         $stream = Stream::where('landing_id', $record->landing_id)
-                            ->orderBy('created_at', 'desc')
+                            ->orderBy('createdAt', 'desc')
                             ->first();
 
                         if (! $stream || blank($stream->full_link)) {
@@ -284,7 +279,7 @@ class ProductResource extends Resource
                     }, shouldOpenInNewTab: true)
                     ->hidden(function ($record): bool {
                         $stream = Stream::where('landing_id', $record->landing_id)
-                            ->orderBy('created_at', 'desc')
+                            ->orderBy('createdAt', 'desc')
                             ->first();
 
                         return blank($stream) || blank($stream->full_link);
@@ -302,9 +297,7 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\ProductResource\Pages\ListProducts::route('/'),
-            // 'create' => Pages\CreateProduct::route('/create'),
-//            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'index' => ListProducts::route('/'),
         ];
     }
 }

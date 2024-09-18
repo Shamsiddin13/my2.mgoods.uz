@@ -6,7 +6,6 @@ use App\Http\EmailVerifyService;
 use App\Mail\OTPMail;
 use App\Models\User;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Wizard;
 use Filament\Notifications\Notification;

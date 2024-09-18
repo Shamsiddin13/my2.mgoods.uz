@@ -216,9 +216,6 @@ class WarehouseDetailsResource extends Resource
                 ]),
             ])
             ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
             ]);
     }
 
@@ -233,8 +230,6 @@ class WarehouseDetailsResource extends Resource
     {
         return [
             'index' => Pages\ListWarehouseDetails::route('/'),
-//            'create' => Pages\CreateWarehouseDetails::route('/create'),
-//            'edit' => Pages\EditWarehouseDetails::route('/{record}/edit'),
         ];
     }
 }

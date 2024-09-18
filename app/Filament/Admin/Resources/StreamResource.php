@@ -2,8 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Resources\StreamResource\Pages;
-use App\Filament\Resources\StreamResource\RelationManagers;
+use App\Filament\Admin\Resources\StreamResource\Pages\ListStreams;
 use App\Models\Landing;
 use App\Models\Product;
 use App\Models\Stream;
@@ -77,13 +76,8 @@ class StreamResource extends Resource
                 //
             ])
             ->actions([
-//                Tables\Actions\ViewAction::make()->label("Ko'rish"),
-//                Tables\Actions\EditAction::make()->label("Yangilash"),
             ])
             ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
             ]);
     }
 
@@ -97,9 +91,7 @@ class StreamResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\StreamResource\Pages\ListStreams::route('/'),
-//            'create' => Pages\CreateStream::route('/create'),
-//            'edit' => Pages\EditStream::route('/{record}/edit'),
+            'index' => ListStreams::route('/'),
         ];
     }
 

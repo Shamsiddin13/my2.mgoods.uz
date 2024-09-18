@@ -3,8 +3,6 @@
 namespace App\Filament\Admin\Resources\ProductResource\Pages;
 
 use App\Filament\Admin\Resources\ProductResource;
-use App\Filament\Resources\WarehouseHistoryReturnResource;
-use App\Filament\Resources\YesResource\Pages\ProductPage;
 use App\Models\Product;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;

@@ -20,7 +20,40 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        // Get the authenticated user
+        $user = auth()->user();
+
+        // Redirect based on user type
+        $this->redirectUser($user);
+
+//        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+    }
+
+    protected function redirectUser($user): void
+    {
+        switch ($user->type) {
+            case 'target':
+                $this->redirect('admin');
+                break;
+            case 'store':
+                $this->redirect('store');
+                break;
+            case 'manager':
+                $this->redirect('manager');
+                break;
+            case 'msadmin':
+                $this->redirect('landing');
+                break;
+            case 'storekeeper':
+                $this->redirect('storekeeper');
+                break;
+            case 'superadmin':
+                $this->redirect('superadmin');
+                break;
+            default:
+                $this->redirectIntended(default: route('dashboard'), navigate: true);
+                break;
+        }
     }
 }; ?>
 
@@ -31,9 +64,10 @@ new #[Layout('layouts.guest')] class extends Component
     <form wire:submit="login">
         <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="form.email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
+            <x-input-label for="login" :value="__('Email / Username')" />
+            <x-text-input id="login" class="block mt-1 w-full" type="text" name="login" autofocus autocomplete="username" />
+            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <x-input-error :messages="$errors->get('username')" class="mt-2" />
         </div>
 
         <!-- Password -->
