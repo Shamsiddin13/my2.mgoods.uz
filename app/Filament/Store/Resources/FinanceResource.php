@@ -7,8 +7,6 @@ use App\Filament\Store\Resources\FinanceResource\Widgets\FinanceOverview;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -46,21 +44,6 @@ class FinanceResource extends Resource
     {
         return $form
             ->schema([
-                Section::make()
-                    ->label("Transaction")
-                    ->schema([
-                        TextInput::make("card_number")
-                            ->label("Karta raqam")
-                            ->placeholder("Karta raqam kiriting")
-                            ->minLength(16)
-                            ->maxLength(16)
-                            ->required(), // Make the input full width of the form
-
-                        TextInput::make("amount")
-                            ->label("Summa")
-                            ->placeholder("Summa kiriting")
-                            ->required(), // Make the input full width of the form
-                    ])
             ]);
     }
 
@@ -72,23 +55,23 @@ class FinanceResource extends Resource
                     ->label('Sana')
                     ->date()
                     ->sortable(),
-                TextColumn::make('card_number')
-                    ->label('Karta raqam')
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('amount')
                     ->label('Summa')
                     ->sortable()
                     ->searchable()
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
-                TextColumn::make('status')
-                    ->label('Holat')
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('description')
                     ->label('Izoh')
                     ->sortable()
                     ->searchable(),
+            ])
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
             ])
             ->filters([
                 Filter::make('transaction_date')
@@ -126,12 +109,8 @@ class FinanceResource extends Resource
                     }),
             ])
             ->actions([
-//                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
             ]);
     }
     public static function getWidgets(): array
@@ -152,8 +131,6 @@ class FinanceResource extends Resource
     {
         return [
             'index' => Pages\ListFinances::route('/'),
-//            'create' => Pages\CreateFinance::route('/create'),
-//            'edit' => Pages\EditFinance::route('/{record}/edit'),
         ];
     }
 }

@@ -19,7 +19,9 @@ class StreamResource extends Resource
 
     protected static ?string $pluralModelLabel = "Oqim";
 
-    protected static ?string $navigationIcon = 'heroicon-o-newspaper';
+    protected static ?string $navigationIcon = 'heroicon-o-paper-clip';
+
+    protected static ?int $navigationSort = 2;
 
     public static function getNavigationBadge(): ?string
     {
@@ -72,6 +74,14 @@ class StreamResource extends Resource
                     ->copyMessage("Oqimga link nusxalandi"),
             ])
             ->defaultSort("createdAt", 'DESC')
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
+            ])
             ->filters([
                 //
             ])

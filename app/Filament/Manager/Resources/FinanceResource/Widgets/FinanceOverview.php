@@ -42,7 +42,7 @@ class FinanceOverview extends BaseWidget
                     SUM(o.summ) AS TotalAmount
                 FROM orders o
                 WHERE
-                    o.status = 'Выполнен' AND
+                    o.status = 'sold' AND
                     o.createdAt BETWEEN '2024-08-01 00:00:00' AND NOW()
                 GROUP BY
                     o.ID_number,
@@ -88,7 +88,7 @@ class FinanceOverview extends BaseWidget
                     SUM(o.summ) AS TotalAmount
                 FROM orders o
                 WHERE
-                    o.status IN ('В пути', 'Доставлен') AND
+                    o.status IN ('send', 'delivered') AND
                     o.createdAt BETWEEN '2024-08-01 00:00:00' AND NOW()
                 GROUP BY
                     o.ID_number,
@@ -134,7 +134,7 @@ class FinanceOverview extends BaseWidget
                     SUM(o.summ) AS TotalAmount
                 FROM orders o
                 WHERE
-                    o.status IN ('Новый','Принят','Недозвон') AND
+                    o.status IN ('new','accept','recall', 'call_late', 'updated') AND
                     o.createdAt BETWEEN '2024-08-01 00:00:00' AND NOW()
                 GROUP BY
                     o.ID_number,
@@ -152,7 +152,7 @@ class FinanceOverview extends BaseWidget
 
         $tolandi = \DB::selectOne("
         SELECT SUM(t.amount) AS total
-        FROM transactions t
+        FROM fin_transactions t
         WHERE t.type = 2
         AND t.contractor_name = ?
     ", [$contractorName]);

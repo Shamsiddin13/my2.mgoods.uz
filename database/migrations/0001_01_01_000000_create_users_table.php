@@ -12,11 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement()->primary()->unsigned();
             $table->string('name');
+            $table->string('username')->unique();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('type', ['target','store','storekeeper', 'msadmin', 'manager', 'superadmin'])->default('target');
+            $table->string('source')->nullable();
+            $table->string('store')->nullable();
+            $table->string('manager')->nullable();
+            $table->decimal('usd_exchange_rate');
+            $table->timestamp('last_exchange_rate_updated_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

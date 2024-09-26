@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class Stream extends Model
 {
@@ -62,6 +61,10 @@ class Stream extends Model
 
         static::creating(function ($model) {
             $model->createdAt = now()->addHours(5);
+            $model->updatedAt = now()->addHours(5);
+        });
+
+        static::updating(function ($model) {
             $model->updatedAt = now()->addHours(5);
         });
 

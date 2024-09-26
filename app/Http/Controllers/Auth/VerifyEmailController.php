@@ -29,7 +29,7 @@ class VerifyEmailController extends Controller
     {
         switch ($user->type) {
             case 'target':
-                return redirect('admin');
+                return redirect('webmaster');
             case 'store':
                 return redirect('store');
             case 'manager':

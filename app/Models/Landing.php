@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Landing extends Model
 {
     use HasFactory;
 
     protected $table = 'landing'; // Specify the table name if it's not the default 'landings'
-
     protected $fillable = [
         'store',
         'article',
@@ -37,5 +37,26 @@ class Landing extends Model
     public static function where(string $column, $value): Builder
     {
         return parent::query()->where($column, $value);
+    }
+
+    protected static function boot():void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->created_at = now()->addHours(5);
+            $model->updated_at = now()->addHours(5);
+            $model->link = 'https://my2.mgoods.uz/l/' . $model->article;
+        });
+
+        static::updating(function ($model) {
+            $model->updated_at = now()->addHours(5);
+        });
+
+    }
+
+    public function product() : BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'article', 'article');
     }
 }

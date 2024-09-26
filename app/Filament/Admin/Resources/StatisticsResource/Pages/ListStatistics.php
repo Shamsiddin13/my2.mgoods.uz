@@ -21,14 +21,6 @@ class ListStatistics extends ListRecords
         return uniqid();
     }
 
-//    public function getTabs():array
-//    {
-//        return [
-//            'Kunlik' => Tab::make(),
-//            'Oqim' => Tab::make(),
-//            'Foyda & Zarar'=>Tab::make(),
-//        ];
-//    }
     public function setPage($page, $pageName = 'page'): void
     {
         parent::setPage($page, $pageName);

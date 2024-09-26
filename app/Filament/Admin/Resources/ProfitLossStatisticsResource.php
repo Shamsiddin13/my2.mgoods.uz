@@ -47,38 +47,68 @@ class ProfitLossStatisticsResource extends Resource
                 TextColumn::make('displayProductName')
                     ->label('Mahsulot nomi')
                     ->searchable(['displayProductName', 'article'])
-                    ->sortable('displayProductName')
+                    ->sortable()
+                    ->limit(35)
+                    ->tooltip(fn($record) => $record->displayProductName)
                     ->toggleable(),
                 TextColumn::make("article")
                     ->label("Article")
                     ->sortable(),
                 TextColumn::make('target')
                     ->label("Harajat summa")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->target > 0.00 ? 'info' : ($record->target <= 0.00 ? 'gray' : null);
+                    })
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('Lead_narxi')
                     ->label("Lead")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Lead_narxi > 0.00 ? 'warning' : ($record->Lead_narxi <= 0.00 ? 'gray' : null);
+                    })
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('Qabul_narxi')
                     ->label("Qabul")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Qabul_narxi > 0.00 ? 'info' : ($record->Qabul_narxi <= 0.00 ? 'gray' : null);
+                    })
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('Sotildi_narxi')
                     ->label("Sotildi")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Sotildi_narxi > 0.00 ? 'success' : ($record->Sotildi_narxi <= 0.00 ? 'gray' : null);
+                    })
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('Profit_Amount')
                     ->label("Profit")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Profit_Amount > 0.00 ? 'success' : ($record->Profit_Amount < 0.00 ? 'danger' : 'gray');
+                    })
                     ->toggleable()
                     ->sortable()
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
                 TextColumn::make('YoldaSotildi_narxi')
                     ->label("Yolda + Sotildi")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->YoldaSotildi_narxi > 0.00 ? 'info' : ($record->YoldaSotildi_narxi <= 0.00 ? 'gray' : null);
+                    })
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('ProfitYolda_Amount')
                     ->label("Profit + Yolda")
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->ProfitYolda_Amount > 0.00 ? 'success' : ($record->ProfitYolda_Amount < 0.00 ? 'danger' : 'gray');
+                    })
                     ->toggleable()
                     ->sortable()
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
@@ -90,7 +120,7 @@ class ProfitLossStatisticsResource extends Resource
                 25,
                 40,
                 50,
-                'all',
+                100,
             ])
             ->filters([
                 //
@@ -101,40 +131,53 @@ class ProfitLossStatisticsResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $source = auth()->user()->source;
+        $user = auth()->user();
+        if (is_null($user)) {
+            throw new \Exception("No authenticated user found.");
+        }
 
-        return Order::from('orders as orders')  // Using 'o orders' alias
-        ->selectRaw("
-            MAX(orders.ID_number) as ID_number,
-            MAX(orders.displayProductName) as displayProductName,
-            orders.article as article,
-            MAX(orders.target) as target,
-            ROUND(MAX(orders.target) / oc.Lead, 2) as Lead_narxi,
-            ROUND(MAX(orders.target) / (oc.Qabul + oc.Yolda + oc.Yetkazildi + oc.Vipolnen + oc.QaytibKeldi), 2) as Qabul_narxi,
-            ROUND(MAX(orders.target) / (oc.Yetkazildi + oc.Vipolnen), 2) as Sotildi_narxi,
-            ROUND(MAX(orders.target) / (ROUND(oc.Yolda / 2, 2) + oc.Yetkazildi + oc.Vipolnen), 2) as YoldaSotildi_narxi,
-            ((MAX(p.target) * oc.VipolnenIDostavlen) - (MAX(orders.target) * MAX(u.kurs))) as Profit_Amount,
-            ((MAX(p.target) * (ROUND(oc.Vputi / 2, 2) + oc.VipolnenIDostavlen)) - (MAX(orders.target) * MAX(u.kurs))) as ProfitYolda_Amount
-        ")
-            ->join('products as p', 'orders.article', '=', 'p.article')  // Joining products table with alias `p`
-            ->join(DB::raw("
-            (SELECT
-                article,
-                COUNT(DISTINCT CASE WHEN status IN ('Новый', 'Принят', 'Недозвон', 'Отмена', 'В пути', 'Доставлен', 'Выполнен', 'Возврат', 'Подмены') THEN ID_number ELSE NULL END) AS Lead,
-                COUNT(DISTINCT CASE WHEN status = 'Принят' THEN ID_number ELSE NULL END) AS Qabul,
-                COUNT(DISTINCT CASE WHEN status IN ('В пути', 'EMU') THEN ID_number ELSE NULL END) AS Yolda,
-                COUNT(DISTINCT CASE WHEN status IN ('Доставлен') THEN ID_number ELSE NULL END) AS Yetkazildi,
-                COUNT(DISTINCT CASE WHEN status IN ('Выполнен') THEN ID_number ELSE NULL END) AS Vipolnen,
-                COUNT(DISTINCT CASE WHEN status IN ('Возврат') THEN ID_number ELSE NULL END) AS QaytibKeldi,
-                COUNT(DISTINCT CASE WHEN status IN ('Выполнен', 'Доставлен') THEN ID_number ELSE NULL END) AS VipolnenIDostavlen,
-                COUNT(DISTINCT CASE WHEN status IN ('В пути') THEN ID_number ELSE NULL END) AS Vputi
-             FROM orders
-             WHERE source = '$source'
-             GROUP BY article
-            ) as oc"), 'orders.article', '=', 'oc.article')  // Subquery alias `oc`
-            ->join('users as u', 'orders.source', '=', 'u.source')  // Joining users table with alias `u`
-            ->where('orders.source', '=', $source)  // Filtering by source
-            ->groupBy('orders.article');  // Group by the `o.article`
+        $source = $user->source;
+
+        // Build the subquery for counts
+        $subQuery = Order::select([
+            'article',
+            DB::raw("COUNT(DISTINCT CASE WHEN status IN (
+            'new', 'updated', 'recall', 'call_late', 'cancel', 'accept',
+            'send', 'delivered', 'returned', 'sold'
+        ) THEN ID_number ELSE NULL END) AS `Lead`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status = 'accept' THEN ID_number ELSE NULL END) AS `Qabul`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status = 'send' THEN ID_number ELSE NULL END) AS `Yolda`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status = 'delivered' THEN ID_number ELSE NULL END) AS `Yetkazildi`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status = 'sold' THEN ID_number ELSE NULL END) AS `Vipolnen`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status = 'returned' THEN ID_number ELSE NULL END) AS `QaytibKeldi`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status IN ('sold', 'delivered') THEN ID_number ELSE NULL END) AS `VipolnenIDostavlen`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN status = 'send' THEN ID_number ELSE NULL END) AS `Vputi`"),
+        ])
+            ->where('source', $source)
+            ->groupBy('article');
+
+        // Main query
+        return Order::from('orders')
+            ->select([
+                DB::raw('MAX(orders.ID_number) AS ID_number'),
+                DB::raw('MAX(orders.displayProductName) AS displayProductName'),
+                'orders.article',
+                DB::raw('MAX(orders.target) AS target'),
+                DB::raw('ROUND(MAX(orders.target) / NULLIF(oc.`Lead`, 0), 2) AS Lead_narxi'),
+                DB::raw('ROUND(MAX(orders.target) / NULLIF((oc.`Qabul` + oc.`Yolda` + oc.`Yetkazildi` + oc.`Vipolnen` + oc.`QaytibKeldi`), 0), 2) AS Qabul_narxi'),
+                DB::raw('ROUND(MAX(orders.target) / NULLIF((oc.`Yetkazildi` + oc.`Vipolnen`), 0), 2) AS Sotildi_narxi'),
+                DB::raw('ROUND(MAX(orders.target) / NULLIF((ROUND(oc.`Yolda` / 2, 2) + oc.`Yetkazildi` + oc.`Vipolnen`), 0), 2) AS YoldaSotildi_narxi'),
+                DB::raw('((MAX(p.target) * oc.`VipolnenIDostavlen`) - (MAX(orders.target) * MAX(u.usd_exchange_rate))) AS Profit_Amount'),
+                DB::raw('((MAX(p.target) * (ROUND(oc.`Vputi` / 2, 2) + oc.`VipolnenIDostavlen`)) - (MAX(orders.target) * MAX(u.usd_exchange_rate))) AS ProfitYolda_Amount'),
+            ])
+            ->join('products as p', 'orders.article', '=', 'p.article')
+            ->joinSub($subQuery, 'oc', function ($join) {
+                $join->on('orders.article', '=', 'oc.article');
+            })
+            ->join('users as u', 'orders.source', '=', 'u.source')
+            ->where('orders.source', $source)
+            ->groupBy('orders.article')
+            ->orderBy('orders.article');
     }
 
 
@@ -149,9 +192,7 @@ class ProfitLossStatisticsResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListProfitLossStatistics::route('/'),
-//            'create' => Pages\CreateProfitLossStatistics::route('/create'),
-            'update-target' => UpdateTarget::route('/update-target'),
+            'index' => ListProfitLossStatistics::route('/')
         ];
     }
 }

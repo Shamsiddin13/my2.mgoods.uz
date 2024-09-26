@@ -21,7 +21,7 @@ class WarehouseDetails extends Model
         'user_id',
         'total_price',
         'type',
-        'quantity',
+        'amount',
         'comment',
         'created_at',
         'updated_at'
@@ -48,7 +48,7 @@ class WarehouseDetails extends Model
     // Define the relationship to the Warehouse (new_warehouse) table
     public function warehouse()
     {
-        return $this->belongsTo(NewWarehouse::class, 'warehouse_id');
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
     protected static function boot():void
@@ -64,5 +64,27 @@ class WarehouseDetails extends Model
             $model->updated_at = now()->addHours(5);
         });
 
+    }
+
+    public static function getAllArticleGroupedBy()
+    {
+        return self::select('article')
+            ->whereNotNull('article')
+            ->where('article', '!=', '')
+            ->where('article', '!=', 'None')
+            ->groupBy('article')
+            ->orderBy('article')
+            ->get();
+    }
+
+    public static function getAllProductNameGroupedBy()
+    {
+        return self::select('product_name')
+            ->whereNotNull('product_name')
+            ->where('product_name', '!=', '')
+            ->where('product_name', '!=', 'None')
+            ->groupBy('product_name')
+            ->orderBy('product_name')
+            ->get();
     }
 }

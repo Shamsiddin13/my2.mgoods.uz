@@ -4,11 +4,11 @@ namespace App\Providers\Filament;
 
 use App\Filament\Auth\CustomLogin;
 use App\Filament\Pages\Registration;
+use App\Models\UniqueLink;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -33,9 +33,51 @@ class StorePanelProvider extends PanelProvider
             ->globalSearchFieldSuffix('ctrl + K')
             ->userMenuItems([
                 MenuItem::make()
-                    ->label('Settings')
-                    ->url('')
-                    ->icon('heroicon-o-cog-6-tooth')
+                    ->label(function () {
+                        $user = auth()->user();
+                        if (!$user || !$user->username) {
+                            return 'Connect To Telegram ID'; // Or handle accordingly
+                        }
+
+                        $uniqueLink = UniqueLink::where('username', $user->username)
+                            ->where('is_used', true)
+                            ->first();
+
+                        return $uniqueLink ? 'Connected Telegram ID' : 'Connect To Telegram ID';
+                    })
+                    ->url(
+                        function () {
+                            $user = auth()->user();
+
+                            // Ensure the user is authenticated and has a username
+                            if (!$user || !$user->username) {
+                                return ''; // Or handle accordingly
+                            }
+
+                            // Fetch the unique_parameter from the unique_links table
+                            $uniqueLink = UniqueLink::where('username', $user->username)
+                                ->where('is_used', false)
+                                ->first();
+
+                            if ($uniqueLink) {
+                                // Construct the Telegram deep link
+                                $telegram_deep_link = "https://t.me/mgoods_bot?start={$uniqueLink->unique_parameter}";
+                                return $telegram_deep_link;
+                            } else {
+                                return 'No available link'; // Or a message indicating no available link
+                            }
+                        }
+                    )
+                    ->openUrlInNewTab()
+                    ->icon(
+                        function () {
+                            $user = auth()->user();
+                            $uniqueLink = UniqueLink::where('username', $user->username)
+                                ->where('is_used', true)
+                                ->first();
+                            return $uniqueLink ? 'heroicon-o-check-circle' : 'heroicon-o-paper-airplane';
+                        }
+                    ),
             ])
             ->plugins([
                 SpotlightPlugin::make()
@@ -43,8 +85,12 @@ class StorePanelProvider extends PanelProvider
             ->default()
             ->id('store')
             ->path('store')
+            ->profile()
+            ->passwordReset()
+            ->emailVerification()
             ->login(CustomLogin::class)
             ->registration(Registration::class)
+            ->databaseNotifications()
             ->colors([
                 'danger' => Color::Rose,
                 'gray' => Color::Slate,
@@ -57,9 +103,9 @@ class StorePanelProvider extends PanelProvider
             ->brandLogo(fn () => view('vendor.filament.-panels.components.logo'))
             ->discoverResources(in: app_path('Filament/Store/Resources'), for: 'App\\Filament\\Store\\Resources')
             ->discoverPages(in: app_path('Filament/Store/Pages'), for: 'App\\Filament\\Store\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
+//            ->pages([
+//                Pages\Dashboard::class,
+//            ])
             ->discoverWidgets(in: app_path('Filament/Store/Widgets'), for: 'App\\Filament\\Store\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,

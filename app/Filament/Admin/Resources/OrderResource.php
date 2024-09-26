@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Filament\Admin\Resources\OrderResource\Pages\ListOrders;
 use App\Models\Order;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -19,8 +20,13 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+
     protected static ?string $navigationLabel = "Buyurtmalar";
+
+    protected static ?string $pluralModelLabel = "Buyurtmalar";
+
+    protected static ?int $navigationSort = 1;
 
     public static function getNavigationBadge(): ?string
     {
@@ -39,53 +45,91 @@ class OrderResource extends Resource
                 TextColumn::make('status')->searchable()->toggleable()->sortable()
                     ->label('Holat')
                     ->badge()
+                    ->formatStateUsing(function (string $state): string{
+                        return match ($state) {
+                            'new' => 'Yangi',
+                            'updated' => 'Yangilandi',
+                            'recall' => "Qayta qo'ng'iroq",
+                            'call_late' => 'Kegin oladi',
+                            'cancel' => 'Otkaz',
+                            'accept' => 'Qabul',
+                            'send' => 'Yuborildi',
+                            'delivered' => 'Yetkazildi',
+                            'returned' => 'Qaytib keldi',
+                            'sold' => 'Sotildi',
+                            default => 'null'
+                        };
+                    })
                     ->color(function (string $state): string{
                         return match ($state) {
-                            'Новый' => 'warning',
-                            'Принят' => 'info',
-                            'Отмена' => 'danger',
-                            'В пути' => 'info',
-                            'Возврат' => 'gray',
-                            'Выполнен' => 'success',
-                            'Доставлен' => 'success',
-                            'Недозвон' => 'gray',
-                            default => 'null',
+                            'new' => 'warning',
+                            'updated' => 'info',
+                            'recall' => 'gray',
+                            'call_late' => 'gray',
+                            'cancel' => 'danger',
+                            'accept' => 'success',
+                            'send' => 'info',
+                            'delivered' => 'success',
+                            'returned' => 'danger',
+                            'sold' => 'success',
+                            default => 'null'
                         };
                     })
                     ->icon(function (string $state): ?string {
                         return match ($state) {
-                            'Новый' => 'heroicon-o-sparkles',
-                            'Принят' => 'heroicon-o-check-circle',
-                            'Отмена' => 'heroicon-o-x-circle',
-                            'В пути' => 'heroicon-o-truck',
-                            'Возврат' => 'heroicon-o-x-circle',
-                            'Выполнен' => 'heroicon-o-check-badge',
-                            'Доставлен' => 'heroicon-o-check-badge',
-                            'Недозвон' => 'heroicon-o-face-frown',
+                            'new' => 'heroicon-o-sparkles',
+                            'updated' => 'heroicon-o-arrow-path',
+                            'recall' => "heroicon-o-phone-arrow-up-right",
+                            'call_late' => 'heroicon-o-phone',
+                            'cancel' => 'heroicon-o-x-circle',
+                            'accept' => 'heroicon-o-check-circle',
+                            'send' => 'heroicon-o-truck',
+                            'delivered' => 'heroicon-o-check-badge',
+                            'returned' => 'heroicon-o-x-circle',
+                            'sold' => 'heroicon-o-check-badge',
                             default => null,
                         };
                     }),
                 TextColumn::make('statusUpdatedAt')->label("Oxirgi o'zgarish")->dateTime()->toggleable()->sortable(),
                 TextColumn::make('source')->label('Source')->searchable()->toggleable()->sortable(),
                 TextColumn::make('target')->label('Target')->money('USD', true)->searchable()->toggleable()->sortable(),
-            ])->defaultSort("createdAt", 'desc')
+            ])
+            ->defaultSort("createdAt", 'desc')
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
+            ])
             ->filters([
                 Tables\Filters\SelectFilter::make('article')
-                    ->options(Order::getAllArticleGroupedBy()->pluck('article', 'article')->toArray())
+                    ->options(Order::getAllArticleGroupedBy('source', auth()->user()->source)->pluck('article', 'article')->toArray())
                     ->label('Artikul')
+                    ->placeholder("artikul nomi ..")
                     ->preload()
                     ->multiple()
                     ->indicator('Artikul'),
+                Tables\Filters\SelectFilter::make('displayProductName')
+                    ->options(Order::getAllProductNameGroupedBy('source', auth()->user()->source)->pluck('displayProductName', 'displayProductName')->toArray())
+                    ->label('Mahsulot Nomi')
+                    ->placeholder("mahsulot nomi ..")
+                    ->preload()
+                    ->multiple()
+                    ->indicator('Mahsulot Nomi'),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'Новый' => 'Новый',
-                        'Принят' => 'Принят',
-                        'Выполнен' => 'Выполнен',
-                        'Доставлен' => 'Доставлен',
-                        'Отмена' => 'Отмена',
-                        'В пути' => 'В пути',
-                        'Возврат' => 'Возврат',
-                        'Недозвон' => 'Недозвон',
+                        'new' => 'Yangi',
+                        'updated' => 'Yangilandi',
+                        'recall' => "Qayta qo'ng'giroq",
+                        'call_late' => 'Kegin oladi',
+                        'cancel' => 'Otkaz',
+                        'accept' => 'Qabul',
+                        'send' => 'Yuborildi',
+                        'delivered' => 'Yetkazildi',
+                        'returned' => 'Qaytib keldi',
+                        'sold' => 'Sotildi',
                     ])
                     ->label('Holat')
                     ->preload()
@@ -158,10 +202,8 @@ class OrderResource extends Resource
                     }),
             ])
             ->actions([
-//                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-//                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
@@ -175,9 +217,7 @@ class OrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\OrderResource\Pages\ListOrders::route('/'),
-//            'create' => \App\Filament\Admin\Resources\OrderResource\Pages\CreateOrder::route('/create'),
-//            'edit' => \App\Filament\Admin\Resources\OrderResource\Pages\EditOrder::route('/{record}/edit'),
+            'index' => ListOrders::route('/'),
         ];
     }
 

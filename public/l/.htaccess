@@ -1,14 +1,21 @@
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /l/
+RewriteEngine On
+RewriteBase /l/
 
-    # This rule will match URLs like /l/mpg651 and pass the 'mpg651' as a parameter to index.php
-    RewriteRule ^([a-zA-Z0-9]+)$ index.php?unique_link=$1 [L,QSA]
+# Redirect HTTP to HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Ensure existing files and directories are served directly without rewrite
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-
-    # Fallback rule to route all other requests to index.php
-    RewriteRule . index.php [L]
+# Ensure the CSS and other static files are loaded over HTTPS
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "upgrade-insecure-requests;"
 </IfModule>
+
+# Redirect the clean URL to the index.php file with a unique_link parameter
+RewriteCond %{REQUEST_URI} ^/l/([a-zA-Z0-9]+) [NC]
+RewriteCond %{QUERY_STRING} ^$
+RewriteRule ^([a-zA-Z0-9]+)$ index.php?unique_link=$1 [L]
+
+# Handle URLs with query parameters
+RewriteCond %{REQUEST_URI} ^/l/([a-zA-Z0-9]+) [NC]
+RewriteCond %{QUERY_STRING} ^(.*)$
+RewriteRule ^([a-zA-Z0-9]+)$ index.php?unique_link=$1 [L,QSA]

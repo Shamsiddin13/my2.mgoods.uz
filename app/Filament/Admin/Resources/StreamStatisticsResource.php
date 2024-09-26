@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Filament\Admin\Resources\StreamStatisticsResource\Pages\ListStreamStatistics;
 use App\Models\Order;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -12,6 +13,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class StreamStatisticsResource extends Resource
 {
@@ -25,39 +27,30 @@ class StreamStatisticsResource extends Resource
     {
         $user = auth()->user();
         if (is_null($user)) {
-            // Handle the case where there's no authenticated user
-            // For example, throw an exception or return an empty builder
             throw new \Exception("No authenticated user found.");
         }
 
         $source = $user->source;
-        return Order::selectRaw("
-                MAX(displayProductName) as displayProductName,
-                link,
-                SUM(Lead) as Lead,
-                SUM(Qabul) as Qabul,
-                SUM(Otkaz) as Otkaz,
-                SUM(Yolda) as Yolda,
-                SUM(Yetkazildi) as Yetkazildi,
-                SUM(Sotildi) as Sotildi,
-                SUM(QaytibKeldi) as QaytibKeldi
-            ")
-            ->from(function ($query) use ($source) {
-                $query->selectRaw("
-            link, MAX(displayProductName) as displayProductName,
-            COUNT(DISTINCT CASE WHEN status IN ('Новый', 'Принят', 'Недозвон', 'Отмена', 'В пути', 'Доставлен', 'Выполнен', 'Возврат', 'Подмены') THEN ID_number ELSE NULL END) AS Lead,
-            COUNT(DISTINCT CASE WHEN status = 'Принят' THEN ID_number ELSE NULL END) AS Qabul,
-            COUNT(DISTINCT CASE WHEN status = 'Отмена' THEN ID_number ELSE NULL END) AS Otkaz,
-            COUNT(DISTINCT CASE WHEN status IN ('В пути', 'EMU') THEN ID_number ELSE NULL END) AS Yolda,
-            COUNT(DISTINCT CASE WHEN status = 'Доставлен' THEN ID_number ELSE NULL END) AS Yetkazildi,
-            COUNT(DISTINCT CASE WHEN status = 'Выполнен' THEN ID_number ELSE NULL END) AS Sotildi,
-            COUNT(DISTINCT CASE WHEN status = 'Возврат' THEN ID_number ELSE NULL END) AS QaytibKeldi
-        ")
-                    ->from('orders')
-                    ->where('source', '=', $source)
-                    ->groupBy('link'); // Use groupBy instead of groupByRaw for better readability and performance if possible
-            }, 'daily_totals')
-            ->groupBy('link');
+
+        return Order::query()
+            ->select([
+                'stream.stream_name',
+                'orders.displayProductName',
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status IN (
+                'new', 'updated', 'recall', 'call_late', 'cancel', 'accept',
+                'send', 'delivered', 'returned', 'sold'
+            ) THEN orders.ID_number ELSE NULL END) AS `Lead`"),
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status = 'accept' THEN orders.ID_number ELSE NULL END) AS `Qabul`"),
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status = 'cancel' THEN orders.ID_number ELSE NULL END) AS `Otkaz`"),
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status = 'send' THEN orders.ID_number ELSE NULL END) AS `Yolda`"),
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status = 'delivered' THEN orders.ID_number ELSE NULL END) AS `Yetkazildi`"),
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status = 'sold' THEN orders.ID_number ELSE NULL END) AS `Sotildi`"),
+                DB::raw("COUNT(DISTINCT CASE WHEN orders.status = 'returned' THEN orders.ID_number ELSE NULL END) AS `QaytibKeldi`"),
+            ])
+            ->join('stream', 'orders.link', '=', 'stream.link')
+            ->where('orders.source', $source)
+            ->groupBy('stream.stream_name', 'orders.displayProductName')
+            ->orderBy('stream.stream_name');
     }
 
 
@@ -73,53 +66,90 @@ class StreamStatisticsResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('link')
-                    ->label('Link')
+                TextColumn::make('stream_name')
+                    ->label('Oqim nomi')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('displayProductName')
                     ->label('Mahsulot')
                     ->sortable()
-                    ->searchable(['displayProductName', 'article'])
+                    ->searchable(['displayProductName'])
                     ->toggleable()
                     ->toggledHiddenByDefault(),
                 TextColumn::make('Lead')
                     ->label('Lead')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Lead > 0 ? 'warning' : ($record->Lead <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('Qabul')
                     ->label('Qabul')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Qabul > 0 ? 'info' : ($record->Qabul <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('Otkaz')
                     ->label('Otkaz')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Otkaz > 0 ? 'danger' : ($record->Otkaz <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('Yolda')
                     ->label('Yolda')
+                    ->badge()
+                    ->icon(function ($record) {
+                        return $record->Yolda > 0 ? 'heroicon-m-truck' : ($record->Yolda <= 0 ? null : null);
+                    })
+                    ->color(function ($record) {
+                        return $record->Yolda > 0 ? 'info' : ($record->Yolda <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('Yetkazildi')
                     ->label('Yetkazildi')
+                    ->badge()
+                    ->icon(function ($record) {
+                        return $record->Yetkazildi > 0 ? 'heroicon-m-check-circle' : ($record->Yetkazildi <= 0 ? null : null);
+                    })
+                    ->color(function ($record) {
+                        return $record->Yetkazildi > 0 ? 'info' : ($record->Yetkazildi <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('Sotildi')
                     ->label('Sotildi')
+                    ->badge()
+                    ->icon(function ($record) {
+                        return $record->Sotildi > 0 ? 'heroicon-m-check-badge' : ($record->Sotildi <= 0 ? null : null);
+                    })
+                    ->color(function ($record) {
+                        return $record->Sotildi > 0 ? 'success' : ($record->Sotildi <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('QaytibKeldi')
                     ->label('Qaytib Keldi')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->QaytibKeldi > 0 ? 'danger' : ($record->QaytibKeldi <= 0 ? 'gray' : null);
+                    })
                     ->sortable()
                     ->toggleable(),
             ])
-            ->defaultSort('link', 'DESC')
+            ->defaultSort('stream_name')
             ->paginated([
                 10,
                 15,
                 25,
                 40,
                 50,
-                'all',
+                100,
             ])
             ->filters([
                 Filter::make('createdAt')
@@ -157,7 +187,6 @@ class StreamStatisticsResource extends Resource
                     }),
             ])
             ->actions([
-//                Tables\Actions\EditAction::make(),
             ]);
     }
 
@@ -171,9 +200,7 @@ class StreamStatisticsResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\StreamStatisticsResource\Pages\ListStreamStatistics::route('/'),
-//            'create' => Pages\CreateStreamStatistics::route('/create'),
-//            'edit' => Pages\EditStreamStatistics::route('/{record}/edit'),
+            'index' => ListStreamStatistics::route('/')
         ];
     }
 }

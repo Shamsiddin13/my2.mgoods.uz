@@ -13,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    protected $login;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -29,7 +30,9 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'login' => ['required', 'string'],
+            'email' => ['required_without:username', 'string', 'email', 'exists:users,email'],
+            'username' => ['required_without:email', 'string', 'exists:users,username'],
+//            'login' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -43,18 +46,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 //
-//        if (! Auth::attempt($this->only($this->login, 'password'), $this->boolean('remember'))) {
-//            RateLimiter::hit($this->throttleKey());
-//
-//            throw ValidationException::withMessages([
-//                $this->login => trans('auth.failed'),
-//            ]);
-//        }
-//
-//        RateLimiter::clear($this->throttleKey());
-        $user = User::where('email', $this->login)
-            ->orwhere('username', $this->login)->first();
-        if (!$user || !Hash::check($this->password, $user->password)) {
+        if (!Auth::attempt($this->only($this->login, 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -62,8 +54,19 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        Auth::login($user, $this->boolean('remember'));
         RateLimiter::clear($this->throttleKey());
+//        $user = User::where('username', $this->login)
+//            ->orwhere('email', $this->login)->first();
+//        if (!$user || !Hash::check($this->password, $user->password)) {
+//            RateLimiter::hit($this->throttleKey());
+//
+//            throw ValidationException::withMessages([
+//                $this->login => trans('auth.failed'),
+//            ]);
+//        }
+
+//        Auth::login($user, $this->boolean('remember'));
+//        RateLimiter::clear($this->throttleKey());
     }
 
     /**
@@ -95,6 +98,12 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->login = filter_var($this->input('login'), FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $this->merge([$this->login => $this->input('login')]);
     }
 
 }

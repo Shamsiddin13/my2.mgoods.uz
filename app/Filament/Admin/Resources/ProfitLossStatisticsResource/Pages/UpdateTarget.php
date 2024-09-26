@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\ProfitLossStatisticsResource\Pages;
 
 use App\Filament\Admin\Resources\ProfitLossStatisticsResource;
 use App\Models\Order;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -17,6 +18,7 @@ class UpdateTarget extends Page
     protected static string $view = 'filament.admin.resources.profit-loss-statistics-resource.pages.update-target';
 
     public $article;
+
     public $new_target;
 
 
@@ -37,8 +39,10 @@ class UpdateTarget extends Page
         $result = Order::where('source', auth()->user()->source)->where('article', $this->article)->first()->update(['target' => $this->new_target]);
         if ($result) {
             Notification::make()
-                ->title('Target Updated')
-                ->body('The target value has been updated for article: ' . $this->article)
+                ->title('Muvvaffaqiyatli yangilandi')
+                ->body(str("Ushbu mahsulot uchun **harajat summa** <br>muvvaffaqiyatli yangilandi " .
+                    'Artikul: ' . "**" . $this->article . "**" . '<br>'
+                )->markdown())
                 ->success()
                 ->send();
         } else {
@@ -59,13 +63,20 @@ class UpdateTarget extends Page
     {
         return [
             Select::make('article')
-                ->label('Article Tanlang')
+                ->label('Artikul')
+                ->placeholder('Artikulni Tanlang')
                 ->options(
                     Order::orderBy('article', 'ASC')  // Add sorting here
-                    ->pluck('article', 'article')
+                    ->where('source', auth()->user()->source)
+                        ->get()
+                        ->mapWithKeys(function ($order) {
+                            return [$order->article => $order->displayProductName . ' | ' . $order->article];
+
+                        })
                         ->toArray()
                 )
                 ->searchable()
+                ->searchPrompt("mahsulot nomi yoki artikul bo'yicha qidiring")
                 ->required()
                 ->live(),
 
@@ -77,5 +88,14 @@ class UpdateTarget extends Page
                 ->live()
                 ->extraAttributes(['class' => 'mb-4']),
         ];
+    }
+
+    private function Action(): Action
+    {
+        return Action::make(__('Update Target'))
+            ->action('updateTarget')
+            ->icon('heroicon-o-check')
+            ->requiresConfirmation()
+            ->color('primary');
     }
 }

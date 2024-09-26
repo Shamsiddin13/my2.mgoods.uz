@@ -3,9 +3,12 @@
 namespace App\Filament\Storekeeper\Resources;
 
 use App\Filament\Storekeeper\Resources\WarehouseDetailsResource\Pages;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\WarehouseDetails;
+use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -13,6 +16,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -23,8 +28,8 @@ class WarehouseDetailsResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
-    protected static ?string $navigationLabel = 'Ombor tafsilotlari';
-    protected static ?string $pluralLabel = 'Ombor tafsilotlari';
+    protected static ?string $navigationLabel = 'Ombor';
+    protected static ?string $pluralLabel = 'Ombor';
 
     protected static ?int $navigationSort = 1;
 
@@ -106,7 +111,7 @@ class WarehouseDetailsResource extends Resource
                             'income' => 'Kirim',
                             'outcome' => 'Chiqim',
                         ]),
-                    Forms\Components\TextInput::make('quantity')
+                    Forms\Components\TextInput::make('amount')
                         ->label('Miqdor')
                         ->numeric()
                         ->required()
@@ -119,7 +124,7 @@ class WarehouseDetailsResource extends Resource
                         ->afterStateUpdated(function ($state, callable $get, callable $set) {
                             if (!empty($state)) {
                                 $selected_product = Product::where('article',$get('article'))->first();
-                                $set('total_price', $get('quantity') * $selected_product->buyPrice ?? 0.00);
+                                $set('total_price', $get('amount') * $selected_product->buyPrice ?? 0.00);
                             } else {
                                 $set('total_price', 0.00);
                             }
@@ -178,7 +183,7 @@ class WarehouseDetailsResource extends Resource
                         'success' => 'income',
                         'danger' => 'outcome',
                     ]),
-                Tables\Columns\TextColumn::make('quantity')
+                Tables\Columns\TextColumn::make('amount')
                     ->label('Miqdor')
                     ->sortable()
                     ->toggleable(),
@@ -191,6 +196,7 @@ class WarehouseDetailsResource extends Resource
                     ->label('Izoh')
                     ->toggleable()
                     ->limit(5)
+                    ->sortable()
                     ->tooltip(fn($record) => $record->comment),
                 Tables\Columns\TextColumn::make('created_at')
                     ->date()
@@ -205,12 +211,75 @@ class WarehouseDetailsResource extends Resource
                     ->tooltip(fn($record) => $record->updated_at->format('Y-m-d H:i:s')),
             ])
             ->defaultSort('created_at', 'desc')
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
+            ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('article')
+                    ->options(WarehouseDetails::getAllArticleGroupedBy()->pluck('article', 'article')->toArray())
+                    ->label('Artikul')
+                    ->placeholder("artikul nomi ..")
+                    ->preload()
+                    ->multiple()
+                    ->indicator('Artikul'),
+                Tables\Filters\SelectFilter::make('product_name')
+                    ->options(WarehouseDetails::getAllProductNameGroupedBy()->pluck('product_name', 'product_name')->toArray())
+                    ->label('Mahsulot Nomi')
+                    ->placeholder("mahsulot nomi ..")
+                    ->preload()
+                    ->multiple()
+                    ->indicator('Mahsulot Nomi'),
+                Tables\Filters\SelectFilter::make('type')
+                    ->options([
+                        'income' => 'Income',
+                        'outcome' => 'Outcome'
+                    ])
+                    ->label('Type')
+                    ->preload()
+                    ->multiple()
+                    ->indicator('Type'),
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from')->label("Yaratilgan sana (dan)"),
+                        DatePicker::make('created_until')->label("Yaratilgan sana (gacha)"),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        $columnLabel = 'Yaratilgan sanasi';  // Default label
+
+                        if ($data['created_from'] ?? null) {
+                            $indicators[] = Indicator::make($columnLabel . ' (dan) ' . Carbon::parse($data['created_from'])->toFormattedDateString())
+                                ->removeField('created_from');
+                        }
+
+                        if ($data['created_until'] ?? null) {
+                            $indicators[] = Indicator::make($columnLabel . ' (gacha) ' . Carbon::parse($data['created_until'])->toFormattedDateString())
+                                ->removeField('created_until');
+                        }
+
+                        return $indicators;
+                    }),
             ])
             ->actions([
                 ActionGroup::make([
-                    Tables\Actions\EditAction::make()->label('Tahrirish'),
+                    Tables\Actions\EditAction::make()->label('Tahrirlash'),
                     Tables\Actions\DeleteAction::make()->label("O'chirish"),
                     Tables\Actions\ViewAction::make()->label("Batafsil ko'rish"),
                 ]),

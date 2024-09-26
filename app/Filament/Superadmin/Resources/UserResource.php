@@ -18,7 +18,7 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 0;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
@@ -33,18 +33,28 @@ class UserResource extends Resource
                 TextInput::make('name')
                     ->label('Name')
                     ->required()
+                    ->placeholder('Enter name ..')
+                    ->minLength(3)
+                    ->maxLength(255),
+
+                TextInput::make('username')
+                    ->label('Username')
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->placeholder('Enter username ..')
                     ->minLength(3)
                     ->maxLength(255),
 
                 TextInput::make('email')
                     ->label('Email')
                     ->email()
-                    ->required()
+                    ->placeholder('Enter email .. (but not required)')
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
                 TextInput::make('password')
                     ->label('Password')
+                    ->placeholder('Enter password ..')
                     ->password()
                     ->revealable()
                     ->required()
@@ -53,11 +63,28 @@ class UserResource extends Resource
                 Select::make('type')
                     ->label('User Type')
                     ->options(User::getAvailableTypes()) // Fetching enum values from the model
+                    ->placeholder('Select a user type ..')
+                    ->reactive()
                     ->required(),
 
+                // Conditional fields based on selected type
                 TextInput::make('source')
-                    ->label('Source')
-                    ->maxLength(255),
+                    ->label('Source Name')
+                    ->placeholder('Enter source name ..')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('type') === 'target'),
+
+                TextInput::make('store')
+                    ->label('Store Name')
+                    ->placeholder('Enter store name ..')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('type') === 'store'),
+
+                TextInput::make('manager')
+                    ->label('Manager Name')
+                    ->placeholder('Enter manager name ..')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('type') === 'manager'),
             ]);
     }
 
@@ -68,47 +95,97 @@ class UserResource extends Resource
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
+                    ->toggleable()
                     ->searchable(),
-
                 TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
                     ->searchable()
+                    ->toggleable()
                     ->limit(50),
-
+                TextColumn::make('username')
+                    ->label('Username')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('email')
                     ->label('Email')
                     ->sortable()
                     ->searchable()
+                    ->toggleable()
                     ->limit(50),
-
                 TextColumn::make('email_verified_at')
                     ->label('Email Verified At')
                     ->tooltip(fn($record) => $record->updated_at->format('Y-m-d H:i:s'))
                     ->sortable()
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
                     ->date(),
-
                 TextColumn::make('type')
                     ->label('User Type')
+                    ->badge()
+                    ->color(function (string $state): string {
+                        return match ($state) {
+                            'target' => 'warning',
+                            'store' => 'info',
+                            'manager' => 'danger',
+                            'msadmin' => 'gray',
+                            'storekeeper' => 'info', // Changed to 'secondary' instead of 'gray' for better readability
+                            'superadmin' => 'success',  // Same here for consistency
+                            default => 'secondary',       // Use a default fallback like 'secondary' instead of 'null'
+                        };
+                    })
+                    ->icon(function (string $state): string {
+                        return match ($state) {
+                            'target' => 'heroicon-s-percent-badge',
+                            'store' => 'heroicon-s-shopping-bag',
+                            'manager' => 'heroicon-s-briefcase',
+                            'msadmin' => 'heroicon-s-shield-check',
+                            'storekeeper' => 'heroicon-s-clipboard-document-list',
+                            'superadmin' => 'heroicon-s-user-group',
+                            default => 'heroicon-s-user', // Default icon for unknown types
+                        };
+                    })
                     ->sortable()
+                    ->toggleable()
                     ->searchable(),
-
                 TextColumn::make('source')
                     ->label('Source')
                     ->sortable()
+                    ->toggleable()
                     ->searchable(),
-
+                TextColumn::make('store')
+                    ->label('Store')
+                    ->sortable()
+                    ->toggleable()
+                    ->searchable(),
+                TextColumn::make('manager')
+                    ->label('Manager')
+                    ->sortable()
+                    ->toggleable()
+                    ->searchable(),
                 TextColumn::make('created_at')
                     ->label('Created At')
                     ->sortable()
                     ->tooltip(fn($record) => $record->created_at->format('Y-m-d H:i:s'))
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
                     ->date(),
-
                 TextColumn::make('updated_at')
                     ->label('Updated At')
                     ->sortable()
                     ->tooltip(fn($record) => $record->updated_at->format('Y-m-d H:i:s'))
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
                     ->date(),
+            ])
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
             ])
             ->filters([
                 //

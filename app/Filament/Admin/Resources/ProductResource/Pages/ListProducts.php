@@ -14,11 +14,6 @@ class ListProducts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-//            Actions\CreateAction::make('createStream')
-//                ->label('Oqim Yaratish')
-//                ->icon('heroicon-o-arrow-path')
-//                ->color('info')
-//                ->url(StreamResource::getUrl('create')),
         ];
     }
 

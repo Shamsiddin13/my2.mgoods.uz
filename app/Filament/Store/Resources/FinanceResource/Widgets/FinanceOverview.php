@@ -22,7 +22,7 @@ class FinanceOverview extends BaseWidget
 
         // 1. Jarayonda Query
         $jarayondaQuery = Order::join('products', 'orders.article', '=', 'products.article')
-            ->whereIn('orders.status', ['В пути', 'Доставлен'])
+            ->whereIn('orders.status', ['send', 'delivered'])
             ->where('orders.store', ucfirst($store))
             ->selectRaw('COUNT(DISTINCT orders.ID_number) * MAX(products.buyPrice) AS TotalStore');
 
@@ -33,7 +33,7 @@ class FinanceOverview extends BaseWidget
 
         // 2. Hisoblandi Query
         $hisoblandiQuery = Order::join('products', 'orders.article', '=', 'products.article')
-            ->where('orders.status', 'Выполнен')
+            ->where('orders.status', 'sold')
             ->where('orders.store', ucfirst($store))
             ->selectRaw('COUNT(DISTINCT orders.ID_number) * MAX(products.buyPrice) AS TotalStore');
 

@@ -3,20 +3,14 @@
 namespace App\Filament\Store\Resources;
 
 use App\Filament\Store\Resources\ProductResource\Pages;
-use App\Filament\Store\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
-use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends Resource
 {
@@ -59,7 +53,7 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-                //
+
             ]);
     }
 
@@ -73,9 +67,7 @@ class ProductResource extends Resource
                     ->toggleable()
                     ->toggledHiddenByDefault(),
                 ImageColumn::make('image')
-                    ->label('Image')
-                    ->height('25%')
-                    ->width('25%'),
+                    ->label('Image'),
                 TextColumn::make('name')
                     ->label('Mahsulot nomi')
                     ->sortable()->searchable()->toggleable(),
@@ -92,6 +84,8 @@ class ProductResource extends Resource
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
                 TextColumn::make('target')
                     ->label('Bonus')
+                    ->badge()
+                    ->color('warning')
                     ->sortable()->toggleable()
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ')),
                 TextColumn::make('status')
@@ -100,16 +94,20 @@ class ProductResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => self::getStatusColor($state)),
             ])
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
+            ])
             ->filters([
                 //
             ])
             ->actions([
-//                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
             ]);
     }
 
@@ -124,8 +122,7 @@ class ProductResource extends Resource
     {
         return [
             'index' => Pages\ListProducts::route('/'),
-//            'create' => Pages\CreateProduct::route('/create'),
-//            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'create' => Pages\CreateProduct::route('/create'),
         ];
     }
     private static function getStatusColor(string $state): string

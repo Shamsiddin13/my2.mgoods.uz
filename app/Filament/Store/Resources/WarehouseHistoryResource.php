@@ -3,25 +3,23 @@
 namespace App\Filament\Store\Resources;
 
 use App\Filament\Store\Resources\WarehouseHistoryResource\Pages;
-use App\Models\Product;
-use App\Models\Warehouse;
+use App\Models\WarehouseDetails;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 
 class WarehouseHistoryResource extends Resource
 {
-    protected static ?string $model = Warehouse::class;
+    protected static ?string $model = WarehouseDetails::class;
     protected static ?string $navigationGroup = 'Ombor';
+
     protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
@@ -55,22 +53,16 @@ class WarehouseHistoryResource extends Resource
                 TextColumn::make('created_at')
                     ->label('Sana')
                     ->toggleable(),
-                TextColumn::make('name')
+                TextColumn::make('product_name')
                     ->label('Mahsulot nomi')
                     ->sortable()
                     ->toggleable()
-                    ->searchable(['article'])
-                    ->getStateUsing(function ($record) {
-                        // Assuming $record is an instance of your Landing model and has an 'article' field
-                        $product = Product::where('article', $record->article)->first();
-
-                        // Return the product name if found, otherwise return 'No Product'
-                        return $product ? $product->name : 'No Product';
-                    }),
+                    ->searchable(['article']),
                 TextColumn::make("amount")
                     ->label("Miqdor")
                     ->searchable()
                     ->toggleable()
+                    ->badge()
                     ->tooltip(function ($record) {
                         return $record->type === 'income' ? 'Kirim qilingan' : ($record->type === 'outcome' ? 'Chiqim qilingan' : '');
                     })
@@ -79,8 +71,16 @@ class WarehouseHistoryResource extends Resource
                     }),
                 TextColumn::make("comment")
                     ->label("Izoh")
-//                    ->searchable()
+                    ->searchable()
                     ->toggleable(),
+            ])
+            ->paginated([
+                10,
+                15,
+                25,
+                40,
+                50,
+                100,
             ])
             ->filters([
                 Filter::make('created_at')
@@ -118,12 +118,8 @@ class WarehouseHistoryResource extends Resource
                     }),
             ])
             ->actions([
-//                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
             ]);
     }
 
@@ -138,8 +134,6 @@ class WarehouseHistoryResource extends Resource
     {
         return [
             'index' => Pages\ListWarehouseHistories::route('/'),
-//            'create' => Pages\CreateWarehouseHistory::route('/create'),
-//            'edit' => Pages\EditWarehouseHistory::route('/{record}/edit'),
         ];
     }
 }

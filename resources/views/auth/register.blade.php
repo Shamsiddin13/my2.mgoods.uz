@@ -23,25 +23,6 @@
             <x-input-error :messages="$errors->get('username')" class="mt-2" />
         </div>
 
-        <!-- User Type Select Dropdown -->
-        <div class="mt-4" x-data="{ userType: '' }">
-            <x-input-label for="user_type" :value="__('Foydalanuvchi turi')"/>
-            <select x-model="userType" class="block mt-1 w-full"  id="userType" name="userType" for="userType">
-                <option value="">Foydalanuvchi turini tanlang</option>
-                <option value="target">Target</option>
-                <option value="store">Store</option>
-                <option value="msadmin">Landing</option>
-                <option value="manager">Manager</option>
-                <option value="storekeeper">Storekeeper</option>
-                <option value="superadmin">Super Admin</option>
-            </select>
-            <x-input-error :messages="$errors->get('userType')" class="mt-2" />
-
-            <div class="mt-4" x-show="userType === 'target' || userType === 'store' || userType === 'manager'">
-                <input for="type_name" id="type_name" name="type_name" type="text" placeholder="Foydalanuvchi turi nomini kiriting" class="mt-1 w-full"/>
-            </div>
-        </div>
-
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Parol')" />

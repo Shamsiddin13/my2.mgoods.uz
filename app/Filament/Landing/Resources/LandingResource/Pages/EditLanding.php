@@ -10,10 +10,11 @@ class EditLanding extends EditRecord
 {
     protected static string $resource = LandingResource::class;
 
+    protected static ?string $title = "Landingni Tahrirlash";
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()->label("O'chirish"),
         ];
     }
 }

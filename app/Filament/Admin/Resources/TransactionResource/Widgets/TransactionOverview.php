@@ -23,7 +23,7 @@ class TransactionOverview extends BaseWidget
 
         // 1. Jarayonda Query (Status: 'В пути', 'Доставлен')
         $jarayondaQuery = Order::join('products', 'orders.article', '=', 'products.article')
-            ->whereIn('orders.status', ['В пути', 'Доставлен'])
+            ->whereIn('orders.status', ['send', 'delivered'])
             ->where('orders.source', $source)
             ->selectRaw('COUNT(DISTINCT orders.ID_number) * products.target AS TotalTarget')
             ->groupBy('orders.article', 'products.target');
@@ -35,7 +35,7 @@ class TransactionOverview extends BaseWidget
 
         // 2. Hisoblandi Query (Status: 'Выполнен')
         $hisoblandiQuery = Order::join('products', 'orders.article', '=', 'products.article')
-            ->where('orders.status', 'Выполнен')
+            ->where('orders.status', 'accept')
             ->where('orders.source', $source)
             ->selectRaw('COUNT(DISTINCT orders.ID_number) * products.target AS TotalTarget')
             ->groupBy('orders.article', 'products.target');

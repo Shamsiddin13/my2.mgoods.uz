@@ -95,7 +95,10 @@ class Registration extends Register
                         ->schema([
                             Select::make('type')
                                 ->label('Select User Type')
-                                ->options(User::getAvailableTypes())
+                                ->options([
+                                    'target' => 'Target',
+                                    'store' => 'Store',
+                                ])
                                 ->reactive()
                                 ->required(),
 

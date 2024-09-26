@@ -3,7 +3,6 @@
 namespace App\Filament\Store\Resources\WarehouseResource\Pages;
 
 use App\Filament\Store\Resources\WarehouseResource;
-use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Model;
 

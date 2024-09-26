@@ -36,29 +36,14 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'username' => ['required', 'string', 'max:255', 'unique:'.User::class],
-            'userType' => ['required', 'in:target,store,msadmin,manager,storekeeper,superadmin'],
-            'type_name' => ['string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-
-        if ($request->userType === 'target') {
-            $this->source = $request->type_name;
-        }
-        elseif ($request->userType === 'store') {
-            $this->store = $request->type_name;
-        }
-        elseif ($request->userType === 'manager') {
-            $this->manager = $request->type_name;
-        }
-
 
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
-            'type' => $request->userType,
-            'source' => $this->source,
-            'store' => $this->store,
-            'manager' => $this->manager,
+            'type' => 'target',
+            'source' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);

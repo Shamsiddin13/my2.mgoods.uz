@@ -22,8 +22,12 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+
     protected static ?string $navigationLabel = "Mahsulotlar";
+
     protected static ?string $pluralModelLabel = "Mahsulotlar";
+
+    protected static ?int $navigationSort = 0;
     protected static int $globalSearchResultsLimit = 20;
     protected static ?string $recordTitleAttribute = "name";
     public static function getGloballySearchableAttributes(): array
@@ -77,11 +81,11 @@ class ProductResource extends Resource
                         // Format the state as a number with space as thousand separator
                         return number_format($state, 0, '.', ' ');
                     }),
-                TextEntry::make('ПВЗ')
-                    ->label('ПВЗ'),
-                TextEntry::make('for_two_free_delivery')
+                TextEntry::make('pvz')
+                    ->label('PVZ'),
+                TextEntry::make('free2')
                     ->label('2->Yetkazish'),
-                TextEntry::make('bonus')
+                TextEntry::make('two_plus_one')
                     ->label('2+1'),
                 TextEntry::make('landing_title')
                     ->label('Title'),
@@ -126,6 +130,7 @@ class ProductResource extends Resource
                         Tables\Columns\TextColumn::make('name')
                             ->label("Name")
                             ->searchable(['name', 'article'])
+                            ->sortable()
                             ->formatStateUsing(function ($record) {
                                 return '<span class="font-bold">Mahsulot: </span>' . e($record->name);
                             })
@@ -140,6 +145,7 @@ class ProductResource extends Resource
                             ->weight(FontWeight::Bold)
                             ->label("Sotuv narxi")
                             ->searchable()
+                            ->sortable()
                             ->formatStateUsing(function ($state) {
                                 // Format the state as a number with space as thousand separator
                                 $formattedState = number_format($state, 0, '.', ' ');
@@ -153,6 +159,7 @@ class ProductResource extends Resource
                             ->weight(FontWeight::Bold)
                             ->label("Bonus")
                             ->searchable()
+                            ->sortable()
                             ->formatStateUsing(function ($state) {
                                 // Format the state as a number with space as thousand separator
                                 $formattedState = number_format($state, 0, '.', ' ');
@@ -162,9 +169,10 @@ class ProductResource extends Resource
                                     . '<span style="color: #2B6CB0; serif;">' . e($formattedState) . '</span>';
                             })
                             ->html(),
-                        Tables\Columns\TextColumn::make('bonus')
+                        Tables\Columns\TextColumn::make('two_plus_one')
                             ->weight(FontWeight::Bold)
                             ->label("2+1")
+                            ->sortable()
                             ->formatStateUsing(function (string $state) {
                                 return '<span class="font-bold">2+1: </span>' . e($state);
                             })
@@ -178,6 +186,7 @@ class ProductResource extends Resource
                     ]),
                 ])->collapsible(),
             ])
+            ->defaultSort('name', 'asc')
             ->filters([
             ])
             ->contentGrid([
@@ -191,7 +200,6 @@ class ProductResource extends Resource
                 48,
                 60,
                 72,
-                'all',
             ])
             ->hiddenFilterIndicators(true)
             ->actions([
@@ -220,23 +228,25 @@ class ProductResource extends Resource
                     ->modalWidth('md')
                     ->form([
                         // Define the fields that will appear in the modal form
-                        Forms\Components\TextInput::make('name')
+                        Forms\Components\TextInput::make('stream_name')
                             ->label('Oqim Nomi')
-                            ->placeholder('Oqimga nom qoying')
+                            ->placeholder('Oqimga nom qoying ..')
                             ->required()
                             ->minLength(4),
                         Forms\Components\TextInput::make('pixel_id')
                             ->label('Pixel Id')
                             ->placeholder('Pixel Id ni kiriting ...')
-                            ->numeric() // Ensure that only numeric values are allowed
+                            ->tel() // Ensure that only numeric values are allowed
                             ->required() // Make the field required
-                            ->minLength(16) // Optional: You can define a minimum length if needed
-                            ->maxLength(16),
+                            ->minLength(15) // Optional: You can define a minimum length if needed
+                            ->maxLength(16)
+                            ->validationMessages([
+                                'required' => "Pixel Id maydonini kiritish talab etiladi.",
+                            ]),
                         TextInput::make('salePrice')
                             ->label('Sotuv narxi')
                             ->default(fn ($record) => number_format($record->salePrice, 0, '.', ' ')) // Set default value from the record
                             ->readOnly(),
-//                            ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ' ')),
 
                         TextInput::make('target')
                             ->label('Bonus')
@@ -247,7 +257,7 @@ class ProductResource extends Resource
                         // Define the action when the form is submitted
                         // Here you can process the form data
                         $stream = new Stream([
-                            'name' => $data['name'],
+                            'stream_name' => $data['stream_name'],
                             'source' => auth()->id(),
                             'pixel_id' => $data['pixel_id'],
                             'landing_id' => $record->landing_id, // Associate with the current product
@@ -255,19 +265,21 @@ class ProductResource extends Resource
                         $stream->save();
 
                         Notification::make()
-                            ->title('Muvaffaqiyatli olindi')
+                            ->title("Yangi Oqim uchun Link Muvaffaqiyatli olindi")
+                            ->body(str('Oqim nomi: ' . '**' . $data['stream_name'] .'**')->markdown())
+                            ->seconds(3)
                             ->success()
-                            ->body('Yangi oqim muvaffaqiyatli olindi.')
                             ->send();
                     }),
 
                 Tables\Actions\Action::make('oqim_link')
-                    ->tooltip('Oqim olingan link')
+                    ->tooltip('Oqim uchun olingan link')
                     ->icon('heroicon-s-arrow-top-right-on-square')
                     ->iconButton()
                     ->url(function ($record): ?string {
                         // Assuming you want to fetch the latest stream for this landing_id
                         $stream = Stream::where('landing_id', $record->landing_id)
+                            ->where('source', auth()->user()->source)
                             ->orderBy('createdAt', 'desc')
                             ->first();
 
@@ -279,6 +291,7 @@ class ProductResource extends Resource
                     }, shouldOpenInNewTab: true)
                     ->hidden(function ($record): bool {
                         $stream = Stream::where('landing_id', $record->landing_id)
+                            ->where('source', auth()->user()->source)
                             ->orderBy('createdAt', 'desc')
                             ->first();
 

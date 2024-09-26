@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use Carbon\Carbon;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -12,10 +10,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -24,7 +24,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public $usesUniqueIds = ['username', 'email'];
 
-    public function canAccessPanel(\Filament\Panel $panel): bool
+
+    public function canAccessPanel(Panel $panel): bool
     {
 
         $allowedPanels = [
@@ -53,7 +54,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'store',
         'manager',
         'type',
-        'kurs',
+        'usd_exchange_rate',
+        'avatar_url',
+        'telegram_id'
     ];
 
     /**
@@ -71,6 +74,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      *
      * @return array<string, string>
      */
+//    public function getFilamentAvatarUrl(): ?string
+//    {
+//        return $this->avatar_url ? Storage::url("$this->avatar_url") : null;
+//    }
+
     protected function casts(): array
     {
         return [
@@ -102,9 +110,22 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
         // Automatically set the created_at field when creating a new product
         static::creating(function ($user) {
+            if ($user->email === null) {
+                $user->email = 'email_unavailable_' . $user->username . '@gmail.com';
+                $user->email_verified_at = Carbon::now()->addHours(5);
+            }
             $user->created_at = Carbon::now()->addHours(5);
             $user->updated_at = Carbon::now()->addHours(5);
             $user->email_verified_at = session('email_verified_at');
+
+            // Create a new Unique_Link for the new user
+            UniqueLink::create([
+                'username' => $user->username,
+                'unique_parameter' => uuid_create(),
+                'created_at' => Carbon::now()->addHours(5),
+                'updated_at' => Carbon::now()->addHours(5),
+                'is_used' => false
+            ]);
         });
 
         // Automatically set the updated_at field when updating a product

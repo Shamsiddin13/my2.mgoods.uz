@@ -22,16 +22,18 @@ class Product extends Model
     protected $fillable = [
         'id',
         'name',
+        'image',
         'buyPrice',
         'salePrice',
         'article',
-        'bonus',
-        'for_two_free_delivery',
-        'ПВЗ',
         'income_quantity',
         'store',
         'status',
         'target',
+        'two_plus_one',
+        'free2',
+        'free1',
+        'pvz',
         'last_updatedAt',
     ];
 

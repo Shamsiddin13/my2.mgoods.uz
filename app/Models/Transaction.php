@@ -11,7 +11,7 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $table = 'transactions';
+    protected $table = 'fin_transactions';
 
     // Define which fields can be mass-assigned
     protected $fillable = [

@@ -4,11 +4,11 @@ namespace App\Providers\Filament;
 
 use App\Filament\Auth\CustomLogin;
 use App\Filament\Pages\Registration;
+use App\Models\UniqueLink;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -34,9 +34,51 @@ class StorekeeperPanelProvider extends PanelProvider
             ->font('Inter')
             ->userMenuItems([
                 MenuItem::make()
-                    ->label('Settings')
-                    ->url('')
-                    ->icon('heroicon-o-cog-6-tooth')
+                    ->label(function () {
+                        $user = auth()->user();
+                        if (!$user || !$user->username) {
+                            return 'Connect To Telegram ID'; // Or handle accordingly
+                        }
+
+                        $uniqueLink = UniqueLink::where('username', $user->username)
+                            ->where('is_used', true)
+                            ->first();
+
+                        return $uniqueLink ? 'Connected Telegram ID' : 'Connect To Telegram ID';
+                    })
+                    ->url(
+                        function () {
+                            $user = auth()->user();
+
+                            // Ensure the user is authenticated and has a username
+                            if (!$user || !$user->username) {
+                                return ''; // Or handle accordingly
+                            }
+
+                            // Fetch the unique_parameter from the unique_links table
+                            $uniqueLink = UniqueLink::where('username', $user->username)
+                                ->where('is_used', false)
+                                ->first();
+
+                            if ($uniqueLink) {
+                                // Construct the Telegram deep link
+                                $telegram_deep_link = "https://t.me/mgoods_bot?start={$uniqueLink->unique_parameter}";
+                                return $telegram_deep_link;
+                            } else {
+                                return 'No available link'; // Or a message indicating no available link
+                            }
+                        }
+                    )
+                    ->openUrlInNewTab()
+                    ->icon(
+                        function () {
+                            $user = auth()->user();
+                            $uniqueLink = UniqueLink::where('username', $user->username)
+                                ->where('is_used', true)
+                                ->first();
+                            return $uniqueLink ? 'heroicon-o-check-circle' : 'heroicon-o-paper-airplane';
+                        }
+                    ),
             ])
             ->plugins([
                 SpotlightPlugin::make()
@@ -45,6 +87,7 @@ class StorekeeperPanelProvider extends PanelProvider
             ->id('storekeeper')
             ->path('storekeeper')
             ->login(CustomLogin::class)
+            ->profile()
             ->registration(Registration::class)
             ->colors([
                 'danger' => Color::Rose,
@@ -58,9 +101,9 @@ class StorekeeperPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('vendor.filament.-panels.components.logo'))
             ->discoverResources(in: app_path('Filament/Storekeeper/Resources'), for: 'App\\Filament\\Storekeeper\\Resources')
             ->discoverPages(in: app_path('Filament/Storekeeper/Pages'), for: 'App\\Filament\\Storekeeper\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
+//            ->pages([
+//                Pages\Dashboard::class,
+//            ])
             ->discoverWidgets(in: app_path('Filament/Storekeeper/Widgets'), for: 'App\\Filament\\Storekeeper\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
