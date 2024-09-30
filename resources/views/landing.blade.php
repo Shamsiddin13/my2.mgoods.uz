@@ -140,6 +140,9 @@
             <input type="hidden" name="pixel_id" value="<?php echo htmlspecialchars($stream->pixel_id ?? ''); ?>">
             <input type="hidden" name="link" value="<?php echo htmlspecialchars($stream->link ?? ''); ?>">
             <input type="hidden" name="two_plus_one" value="<?php echo htmlspecialchars($product->two_plus_one ?? ''); ?>">
+            <input type="hidden" name="free2" value="<?php echo htmlspecialchars($product['free2']); ?>">
+            <input type="hidden" name="free1" value="<?php echo htmlspecialchars($product['free1']); ?>">
+            <input type="hidden" name="pvz" value="<?php echo htmlspecialchars($product['pvz']); ?>">
 
             <select name="region" class="field" required title="'Ҳудудни танланг' bo‘sh bo‘lмаслиги керак.">
                 <option disabled selected hidden>Ҳудудни танланг</option>
@@ -232,7 +235,7 @@
                     phoneComplete: `Telefon raqamingizni to'liq kiriting`,
                 },
                 region: {
-                    required: `'Ҳудудни танланг' bo‘sh bo'lмаслиги керак.`,
+                    required: `'Ҳудудни танланг' bo‘sh bo'lmasligi kerak.`,
                 },
             },
             submitHandler: function (form) {

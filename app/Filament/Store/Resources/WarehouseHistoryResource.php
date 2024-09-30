@@ -3,6 +3,7 @@
 namespace App\Filament\Store\Resources;
 
 use App\Filament\Store\Resources\WarehouseHistoryResource\Pages;
+use App\Models\Product;
 use App\Models\WarehouseDetails;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -57,6 +58,13 @@ class WarehouseHistoryResource extends Resource
                     ->label('Mahsulot nomi')
                     ->sortable()
                     ->toggleable()
+                    ->tooltip(function ($record) {
+                        // Assuming $record is an instance of your Landing model and has an 'article' field
+                        $product = Product::where('name', $record->product_name)->first();
+
+                        // Return the product name if found, otherwise return 'No Product'
+                        return $product ? $product->article : 'No Product';
+                    })
                     ->searchable(['article']),
                 TextColumn::make("amount")
                     ->label("Miqdor")

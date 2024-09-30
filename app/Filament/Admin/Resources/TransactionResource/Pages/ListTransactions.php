@@ -33,6 +33,7 @@ class ListTransactions extends ListRecords
                                 ->placeholder('Yaroqli karta raqamini kiriting ..')
                                 ->maxLength(16)
                                 ->minLength(16)
+                                ->integer()
                                 ->validationMessages([
                                     'required' => "Karta raqam maydonini kiritish talab etiladi.",
                                 ])

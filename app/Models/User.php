@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
@@ -118,7 +117,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             $user->updated_at = Carbon::now()->addHours(5);
             $user->email_verified_at = session('email_verified_at');
 
-            // Create a new Unique_Link for the new user
             UniqueLink::create([
                 'username' => $user->username,
                 'unique_parameter' => uuid_create(),
@@ -126,6 +124,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
                 'updated_at' => Carbon::now()->addHours(5),
                 'is_used' => false
             ]);
+
+            if (in_array($user->type, ['target', 'store', 'manager'])) {
+                UsersReport::create([
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'user_type' => $user->type,
+                    'last_updated_at' => Carbon::now()->addHours(5)
+                ]);
+            }
+
         });
 
         // Automatically set the updated_at field when updating a product

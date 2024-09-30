@@ -82,6 +82,7 @@ class Product extends Model
     {
         return $this->landingData?->description;
     }
+
     public function getLandingDataAttribute()
     {
         return Landing::where('article', $this->article)->first();
@@ -92,10 +93,6 @@ class Product extends Model
         return parent::query()->where($column, $value);
     }
 
-    public function status() : Builder
-    {
-        return $this->where(User::class, 'status', 'Ochiq');
-    }
     private static function select(string $column): Builder
     {
         return self::query()->select($column);

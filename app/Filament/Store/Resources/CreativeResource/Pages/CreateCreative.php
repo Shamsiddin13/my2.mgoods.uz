@@ -22,5 +22,5 @@ class CreateCreative extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return ListProducts::getUrl();
-    }
+}
 }

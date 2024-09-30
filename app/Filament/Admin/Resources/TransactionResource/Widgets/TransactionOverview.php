@@ -3,11 +3,8 @@
 namespace App\Filament\Admin\Resources\TransactionResource\Widgets;
 
 use App\Filament\Admin\Resources\TransactionResource\Pages\ListTransactions;
-use App\Models\Order;
-use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Support\Facades\DB;
 
 class TransactionOverview extends BaseWidget
 {
@@ -18,39 +15,27 @@ class TransactionOverview extends BaseWidget
     }
     protected function getStats(): array
     {
-        $source = auth()->user()->source;
-        $contractorName = auth()->user()->source;
+        // Get the current user's ID
+        $userId = auth()->user()->id;
 
-        // 1. Jarayonda Query (Status: 'В пути', 'Доставлен')
-        $jarayondaQuery = Order::join('products', 'orders.article', '=', 'products.article')
-            ->whereIn('orders.status', ['send', 'delivered'])
-            ->where('orders.source', $source)
-            ->selectRaw('COUNT(DISTINCT orders.ID_number) * products.target AS TotalTarget')
-            ->groupBy('orders.article', 'products.target');
+        // Fetch the user report data from the database
+        $userReport = \DB::table('users_reports')
+            ->select('total', 'hold', 'paid')
+            ->where('user_id', $userId)
+            ->first();
 
-        $jarayonda = DB::table(DB::raw("({$jarayondaQuery->toSql()}) as jarayonda_subquery"))
-            ->mergeBindings($jarayondaQuery->getQuery()) // Merge bindings to avoid issues with bindings.
-            ->selectRaw('COALESCE(SUM(TotalTarget), 0) as Jarayonda')
-            ->value('Jarayonda'); // Get the value of the query directly.
+        // If no report is found, set default values
+        if (!$userReport) {
+            $hisoblandi = 0;
+            $tolandi = 0;
+            $jarayonda = 0;
+        } else {
+            $hisoblandi = $userReport->total;
+            $tolandi = $userReport->paid;
+            $jarayonda = $userReport->hold;
+        }
 
-        // 2. Hisoblandi Query (Status: 'Выполнен')
-        $hisoblandiQuery = Order::join('products', 'orders.article', '=', 'products.article')
-            ->where('orders.status', 'accept')
-            ->where('orders.source', $source)
-            ->selectRaw('COUNT(DISTINCT orders.ID_number) * products.target AS TotalTarget')
-            ->groupBy('orders.article', 'products.target');
-
-        $hisoblandi = DB::table(DB::raw("({$hisoblandiQuery->toSql()}) as hisoblandi_subquery"))
-            ->mergeBindings($hisoblandiQuery->getQuery())
-            ->selectRaw('COALESCE(SUM(TotalTarget), 0) as Hisoblandi')
-            ->value('Hisoblandi');
-
-        // 3. Tolandi Query (Transaction Type: 2)
-        $tolandi = Transaction::where('type', 2)
-            ->where('contractor_name', $contractorName)
-            ->sum('amount');
-
-        // 4. Balans Calculation (Hisoblandi - Tolandi)
+        // Calculate the balance
         $balans = $hisoblandi - $tolandi;
 
         return [
@@ -72,4 +57,5 @@ class TransactionOverview extends BaseWidget
                 ->icon('heroicon-o-truck'), // Example icon for 'Jarayonda'
         ];
     }
+
 }

@@ -26,6 +26,7 @@ class RequestFinResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $pluralModelLabel = 'Request Finance';
+    protected static ?string $navigationGroup = 'Finance';
 
     protected static ?int $navigationSort = 1;
 

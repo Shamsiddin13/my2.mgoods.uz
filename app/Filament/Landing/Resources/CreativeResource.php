@@ -12,6 +12,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -45,13 +47,15 @@ class CreativeResource extends Resource
                             ->dehydrated()
                             ->default(auth()->user()->id),
                         Select::make('store')
-                            ->label('Store')
-                            ->preload()
+                            ->label("Do'kon")
                             ->options(Product::groupBy('store')->whereNotNull('store')->pluck('store', 'store'))
                             ->reactive()
                             ->searchable()
+                            ->validationMessages([
+                                'required' => "Do'kon kiritish talab etiladi"
+                            ])
+                            ->searchPrompt("do'kon nomi bo'yicha qidiring ..")
                             ->required()
-                            ->dehydrated()
                             ->columnSpanFull(),
                         Select::make('article')
                             ->label('Artikul')
@@ -99,8 +103,16 @@ class CreativeResource extends Resource
                             ->disk('public')
                             ->directory('creative_videos')
                             ->required()
+                            ->acceptedFileTypes(['video/mp4', 'video/avi', 'video/mov', 'video/webm'])
+                            ->maxSize(102400) // Maximum size in KB (e.g., 100MB)
+                            ->preserveFilenames() // Optional: Preserve original filenames
+                            ->multiple(false) // Set to true if multiple videos can be uploaded
+                            ->maxFiles(1) // Maximum number of files allowed
+                            ->visibility('public') // Optional: Set file visibility
                             ->validationMessages([
-                                'required' => "Video yuklanishi talab etiladi"
+                                'required' => "Video yuklanishi talab etiladi",
+                                'file.max' => "Video hajmi 100MB dan oshmasligi kerak.",
+                                'file.accepted' => "Faqat quyidagi formatdagi videolar qabul qilinadi: mp4, avi, mov, webm."
                             ])
                             ->columnSpanFull(),
                     ])->columns(2)
@@ -128,6 +140,13 @@ class CreativeResource extends Resource
                     ->limit(10)
                     ->toggleable()
                     ->tooltip(fn($record) => $record->description),
+                TextColumn::make('video')
+                    ->label('Video Url')
+                    ->badge()
+                    ->url(fn($record) => url("storage/{$record->video}"))
+                    ->limit(25)
+                    ->formatStateUsing(fn($record) => url("storage/{$record->video}"))
+                    ->openUrlInNewTab(),
                 TextColumn::make('created_at')
                     ->label('Yaratilgan Vaqt')
                     ->date()
@@ -180,12 +199,38 @@ class CreativeResource extends Resource
         ];
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                TextEntry::make('article')
+                    ->label('Artikul'),
+                TextEntry::make('title')
+                    ->label('Sarlavha'),
+                TextEntry::make('description')
+                    ->label('Tavsif'),
+                TextEntry::make('video')
+                    ->label('Video Url')
+                    ->url(fn($record) => url("storage/{$record->video}"))
+                    ->formatStateUsing(fn($record) => url("storage/{$record->video}"))
+                    ->openUrlInNewTab(),
+                TextEntry::make('created_at')
+                    ->label('Yaratilgan Vaqt')
+                    ->dateTime(),
+                TextEntry::make('updated_at')
+                    ->label('Yangilangan Vaqt')
+                    ->dateTime(),
+            ])
+            ->columns(1)
+            ->inlineLabel();
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListCreatives::route('/'),
             'create' => Pages\CreateCreative::route('/create'),
-            'edit' => Pages\EditCreative::route('/{record}/edit'),
+//            'edit' => Pages\EditCreative::route('/{record}/edit'),
         ];
     }
 }

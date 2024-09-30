@@ -84,8 +84,16 @@ class CreativeResource extends Resource
                             ->disk('public')
                             ->directory('creative_videos')
                             ->required()
+                            ->acceptedFileTypes(['video/mp4', 'video/avi', 'video/mov', 'video/webm'])
+                            ->maxSize(102400) // Maximum size in KB (e.g., 100MB)
+                            ->preserveFilenames() // Optional: Preserve original filenames
+                            ->multiple(false) // Set to true if multiple videos can be uploaded
+                            ->maxFiles(1) // Maximum number of files allowed
+                            ->visibility('public') // Optional: Set file visibility
                             ->validationMessages([
-                                'required' => "Video yuklanishi talab etiladi"
+                                'required' => "Video yuklanishi talab etiladi",
+                                'file.max' => "Video hajmi 100MB dan oshmasligi kerak.",
+                                'file.accepted' => "Faqat quyidagi formatdagi videolar qabul qilinadi: mp4, avi, mov, webm."
                             ])
                             ->columnSpanFull(),
                     ])->columns(2)

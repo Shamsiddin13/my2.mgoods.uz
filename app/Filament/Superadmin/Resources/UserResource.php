@@ -179,6 +179,7 @@ class UserResource extends Resource
                     ->toggledHiddenByDefault()
                     ->date(),
             ])
+            ->defaultSort('created_at', 'DESC')
             ->paginated([
                 10,
                 15,

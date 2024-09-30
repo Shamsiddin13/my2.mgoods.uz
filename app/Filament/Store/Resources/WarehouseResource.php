@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class WarehouseResource extends Resource
 {
@@ -33,19 +34,81 @@ class WarehouseResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $store = auth()->user()->store;
+        $store = Auth::user()->store;
 
         return WarehouseDetails::select('article')
-            ->selectRaw('SUM(CASE WHEN status IN (\'new\') THEN quantity ELSE 0 END) AS Yangi')
-            ->selectRaw('SUM(CASE WHEN status IN (\'accept\') THEN quantity ELSE 0 END) AS Qabul')
-            ->selectRaw('SUM(CASE WHEN status IN (\'send\', \'delivered\') THEN quantity ELSE 0 END) AS Yolda')
-            ->selectRaw('SUM(CASE WHEN status IN (\'delivered\') THEN quantity ELSE 0 END) AS Yetkazildi')
-            ->selectRaw('SUM(CASE WHEN status IN (\'returned\') THEN quantity ELSE 0 END) AS QaytibKeldi')
-            ->selectRaw('SUM(CASE WHEN status IN (\'sold\') THEN quantity ELSE 0 END) AS Sotildi')
-            ->selectRaw('COALESCE((SELECT SUM(amount) FROM warehouse_details WHERE warehouse_details.article = orders.article AND type = \'income\'), 0) AS Kirim')
-            ->selectRaw('COALESCE((COALESCE((SELECT SUM(amount) FROM warehouse_details WHERE warehouse_details.article = orders.article AND type = \'income\'), 0) - (SUM(CASE WHEN status IN (\'send\', \'delivered\') THEN quantity ELSE 0 END) + SUM(CASE WHEN status IN (\'sold\') THEN quantity ELSE 0 END))), 0) AS Qoldiq')
+            // Aggregate Quantities by Status
+            ->selectRaw("SUM(CASE WHEN status IN ('new') THEN quantity ELSE 0 END) AS Yangi")
+            ->selectRaw("SUM(CASE WHEN status IN ('accept') THEN quantity ELSE 0 END) AS Qabul")
+            ->selectRaw("SUM(CASE WHEN status IN ('send', 'delivered') THEN quantity ELSE 0 END) AS Yolda")
+            ->selectRaw("SUM(CASE WHEN status IN ('delivered') THEN quantity ELSE 0 END) AS Yetkazildi")
+            ->selectRaw("SUM(CASE WHEN status IN ('returned') THEN quantity ELSE 0 END) AS QaytibKeldi")
+            ->selectRaw("SUM(CASE WHEN status IN ('sold') THEN quantity ELSE 0 END) AS Sotildi")
+
+            // Calculate Total Income (Kirim)
+            ->selectRaw("
+                COALESCE(
+                    (SELECT SUM(amount)
+                     FROM warehouse_details wd_income
+                     WHERE wd_income.article = orders.article
+                       AND wd_income.type = 'income'),
+                    0
+                ) AS Kirim
+            ")
+
+            // Calculate Total Outcome (Outcome)
+            ->selectRaw("
+                COALESCE(
+                    (SELECT SUM(amount)
+                     FROM warehouse_details wd_outcome
+                     WHERE wd_outcome.article = orders.article
+                       AND wd_outcome.type = 'outcome'),
+                    0
+                ) AS QaytaribBerildi
+            ")
+
+            // Calculate Qoldiq (Remainder)
+            ->selectRaw("
+                COALESCE(
+                    (
+                        COALESCE(
+                            (SELECT SUM(amount)
+                             FROM warehouse_details wd_income
+                             WHERE wd_income.article = orders.article
+                               AND wd_income.type = 'income'),
+                            0
+                        )
+                        -
+                        (
+                            SUM(CASE WHEN status IN ('send', 'delivered') THEN quantity ELSE 0 END)
+                            +
+                            SUM(CASE WHEN status IN ('sold') THEN quantity ELSE 0 END)
+                        )
+                    ),
+                    0
+                )
+                -
+                COALESCE(
+                    (
+                        COALESCE(
+                            (SELECT SUM(amount)
+                             FROM warehouse_details wd_outcome
+                             WHERE wd_outcome.article = orders.article
+                               AND wd_outcome.type = 'outcome'),
+                            0
+                        )
+                    ),
+                    0
+                ) AS Qoldiq
+            ")
+
+            // Base Table
             ->from('orders')
+
+            // Apply Store Filter
             ->where('store', $store)
+
+            // Group By Article
             ->groupBy('article');
     }
 
@@ -57,6 +120,8 @@ class WarehouseResource extends Resource
                     ->label('Mahsulot nomi')
                     ->sortable()
                     ->toggleable()
+                    ->limit(25)
+                    ->tooltip(fn($record) => $record->article)
                     ->searchable(['article'])
                     ->getStateUsing(function ($record) {
                         // Assuming $record is an instance of your Landing model and has an 'article' field
@@ -81,15 +146,34 @@ class WarehouseResource extends Resource
                     ->toggleable(),
                 TextColumn::make('Yolda')
                     ->sortable()
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Yolda > 0 ? 'info' : ($record->Yolda <= 0 ? 'gray' : null);
+                    })
+                    ->icon(function ($record) {
+                        return $record->Yolda > 0 ? 'heroicon-m-truck' : ($record->Yolda <= 0 ? null : null);
+                    })
                     ->toggleable(),
                 TextColumn::make('Yetkazildi')
                     ->sortable()
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->Yetkazildi > 0 ? 'success' : ($record->Yetkazildi <= 0 ? 'gray' : null);
+                    })
                     ->toggleable(),
                 TextColumn::make('QaytibKeldi')
                     ->label('Qaytib kelgan')
                     ->badge()
                     ->color(function ($record) {
                         return $record->QaytibKeldi <= 0 ? 'gray' : ($record->QaytibKeldi > 0 ? 'danger' : null);
+                    })
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('QaytaribBerildi')
+                    ->label('Qaytarib Berildi')
+                    ->badge()
+                    ->color(function ($record) {
+                        return $record->QaytaribBerildi <= 0 ? 'gray' : ($record->QaytaribBerildi > 0 ? 'danger' : null);
                     })
                     ->sortable()
                     ->toggleable(),

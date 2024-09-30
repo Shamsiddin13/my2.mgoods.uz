@@ -46,7 +46,7 @@ class ProfitLossStatisticsResource extends Resource
             ->columns([
                 TextColumn::make('displayProductName')
                     ->label('Mahsulot nomi')
-                    ->searchable(['displayProductName', 'article'])
+                    ->searchable(['o.displayProductName', 'o.article'])
                     ->sortable()
                     ->limit(35)
                     ->tooltip(fn($record) => $record->displayProductName)
@@ -138,47 +138,49 @@ class ProfitLossStatisticsResource extends Resource
 
         $source = $user->source;
 
-        // Build the subquery for counts
+        // Build the subquery for counts with alias 'oc'
         $subQuery = Order::select([
-            'article',
-            DB::raw("COUNT(DISTINCT CASE WHEN status IN (
+            'o.article', // Using alias 'o' for orders
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status IN (
             'new', 'updated', 'recall', 'call_late', 'cancel', 'accept',
             'send', 'delivered', 'returned', 'sold'
-        ) THEN ID_number ELSE NULL END) AS `Lead`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status = 'accept' THEN ID_number ELSE NULL END) AS `Qabul`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status = 'send' THEN ID_number ELSE NULL END) AS `Yolda`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status = 'delivered' THEN ID_number ELSE NULL END) AS `Yetkazildi`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status = 'sold' THEN ID_number ELSE NULL END) AS `Vipolnen`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status = 'returned' THEN ID_number ELSE NULL END) AS `QaytibKeldi`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status IN ('sold', 'delivered') THEN ID_number ELSE NULL END) AS `VipolnenIDostavlen`"),
-            DB::raw("COUNT(DISTINCT CASE WHEN status = 'send' THEN ID_number ELSE NULL END) AS `Vputi`"),
+        ) THEN o.ID_number ELSE NULL END) AS `Lead`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status = 'accept' THEN o.ID_number ELSE NULL END) AS `Qabul`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status = 'send' THEN o.ID_number ELSE NULL END) AS `Yolda`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status = 'delivered' THEN o.ID_number ELSE NULL END) AS `Yetkazildi`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status = 'sold' THEN o.ID_number ELSE NULL END) AS `Vipolnen`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status = 'returned' THEN o.ID_number ELSE NULL END) AS `QaytibKeldi`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status IN ('sold', 'delivered') THEN o.ID_number ELSE NULL END) AS `VipolnenIDostavlen`"),
+            DB::raw("COUNT(DISTINCT CASE WHEN o.status = 'send' THEN o.ID_number ELSE NULL END) AS `Vputi`"),
         ])
-            ->where('source', $source)
-            ->groupBy('article');
+            ->from('orders as o') // Alias 'o' for orders
+            ->where('o.source', $source)
+            ->groupBy('o.article');
 
-        // Main query
-        return Order::from('orders')
+        // Main query with alias 'o'
+        return Order::from('orders as o')
             ->select([
-                DB::raw('MAX(orders.ID_number) AS ID_number'),
-                DB::raw('MAX(orders.displayProductName) AS displayProductName'),
-                'orders.article',
-                DB::raw('MAX(orders.target) AS target'),
-                DB::raw('ROUND(MAX(orders.target) / NULLIF(oc.`Lead`, 0), 2) AS Lead_narxi'),
-                DB::raw('ROUND(MAX(orders.target) / NULLIF((oc.`Qabul` + oc.`Yolda` + oc.`Yetkazildi` + oc.`Vipolnen` + oc.`QaytibKeldi`), 0), 2) AS Qabul_narxi'),
-                DB::raw('ROUND(MAX(orders.target) / NULLIF((oc.`Yetkazildi` + oc.`Vipolnen`), 0), 2) AS Sotildi_narxi'),
-                DB::raw('ROUND(MAX(orders.target) / NULLIF((ROUND(oc.`Yolda` / 2, 2) + oc.`Yetkazildi` + oc.`Vipolnen`), 0), 2) AS YoldaSotildi_narxi'),
-                DB::raw('((MAX(p.target) * oc.`VipolnenIDostavlen`) - (MAX(orders.target) * MAX(u.usd_exchange_rate))) AS Profit_Amount'),
-                DB::raw('((MAX(p.target) * (ROUND(oc.`Vputi` / 2, 2) + oc.`VipolnenIDostavlen`)) - (MAX(orders.target) * MAX(u.usd_exchange_rate))) AS ProfitYolda_Amount'),
+                DB::raw('MAX(o.ID_number) AS ID_number'),
+                DB::raw('MAX(o.displayProductName) AS displayProductName'),
+                'o.article',
+                DB::raw('MAX(o.target) AS target'),
+                DB::raw('ROUND(MAX(o.target) / NULLIF(oc.`Lead`, 0), 2) AS Lead_narxi'),
+                DB::raw('ROUND(MAX(o.target) / NULLIF((oc.`Qabul` + oc.`Yolda` + oc.`Yetkazildi` + oc.`Vipolnen` + oc.`QaytibKeldi`), 0), 2) AS Qabul_narxi'),
+                DB::raw('ROUND(MAX(o.target) / NULLIF((oc.`Yetkazildi` + oc.`Vipolnen`), 0), 2) AS Sotildi_narxi'),
+                DB::raw('ROUND(MAX(o.target) / NULLIF((ROUND(oc.`Yolda` / 2, 2) + oc.`Yetkazildi` + oc.`Vipolnen`), 0), 2) AS YoldaSotildi_narxi'),
+                DB::raw('((MAX(p.target) * oc.`VipolnenIDostavlen`) - (MAX(o.target) * MAX(u.usd_exchange_rate))) AS Profit_Amount'),
+                DB::raw('((MAX(p.target) * (ROUND(oc.`Vputi` / 2, 2) + oc.`VipolnenIDostavlen`)) - (MAX(o.target) * MAX(u.usd_exchange_rate))) AS ProfitYolda_Amount'),
             ])
-            ->join('products as p', 'orders.article', '=', 'p.article')
+            ->join('products as p', 'o.article', '=', 'p.article')
             ->joinSub($subQuery, 'oc', function ($join) {
-                $join->on('orders.article', '=', 'oc.article');
+                $join->on('o.article', '=', 'oc.article');
             })
-            ->join('users as u', 'orders.source', '=', 'u.source')
-            ->where('orders.source', $source)
-            ->groupBy('orders.article')
-            ->orderBy('orders.article');
+            ->join('users as u', 'o.source', '=', 'u.source')
+            ->where('o.source', $source)
+            ->groupBy('o.article')
+            ->orderBy('o.article');
     }
+
 
 
 
